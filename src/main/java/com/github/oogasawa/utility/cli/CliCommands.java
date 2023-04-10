@@ -15,6 +15,8 @@ public class CliCommands {
 
     TreeMap<String, Options> commands;
 
+    TreeMap<String, String> commandDescMap = new TreeMap<>();
+    
     Options universalOptions;
 
     /** Command name which is specified in the given command line. */
@@ -40,6 +42,14 @@ public class CliCommands {
         commands.put(command, options);
     }
 
+
+    /**  Add options that is associated with the command. */
+    public void addCommand(String command, Options options, String description) {
+        commands.put(command, options);
+        commandDescMap.put(command, description);
+    }
+
+    
 
     /** Add options that can be used independently of the cli commands. */
     public void addUniversalOption(Option option) {
@@ -88,6 +98,7 @@ public class CliCommands {
         for (String command : this.commands.keySet()) {
             Options options = this.commands.get(command);
 
+            System.out.println(commandDescMap.get(command));
             HelpFormatter hf = new HelpFormatter();
             hf.printHelp(command, options, true);
             System.out.println("");
