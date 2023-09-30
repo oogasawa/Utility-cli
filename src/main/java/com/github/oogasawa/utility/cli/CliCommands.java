@@ -11,10 +11,13 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 
+
 public class CliCommands {
 
+    /** Map of command name and its options. */
     TreeMap<String, Options> commands;
 
+    /** Map of command name and its description. */
     TreeMap<String, String> commandDescMap = new TreeMap<>();
     
     Options universalOptions;
@@ -92,13 +95,26 @@ public class CliCommands {
 
 
     public void printHelp(String programName) {
-        System.out.println("\n" + programName + "\n");
-        System.out.println("The following is the usage of each command.\n");
+        System.out.println("\n## Program name: " + programName + "\n");
 
+        System.out.println("\n## Commands\n");
+
+        for (String command : this.commands.keySet()) {
+
+            if (this.commandDescMap.containsKey(command)) {
+                System.out.println(command + "\n    " + this.commandDescMap.get(command));
+            }
+            else {
+                System.out.println(command + "\n    " + "(No description)");
+            }
+            
+        }
+
+        System.out.println("\n## Options\n");
+        
         for (String command : this.commands.keySet()) {
             Options options = this.commands.get(command);
 
-            System.out.println(commandDescMap.get(command));
             HelpFormatter hf = new HelpFormatter();
             hf.printHelp(command, options, true);
             System.out.println("");
