@@ -19,6 +19,9 @@ public class CliCommands {
 
     /** Map of command name and its description. */
     TreeMap<String, String> commandDescMap = new TreeMap<>();
+
+    TreeMap<String, String> commandExampleMap = new TreeMap<>();
+
     
     Options universalOptions;
 
@@ -34,7 +37,7 @@ public class CliCommands {
                                         .option("h")
                                         .longOpt("help")
                                         .hasArg(false)
-                                        // .argName("file")
+                                        .argName("help")
                                         .desc("print help message")
                                         .required(false)
                                         .build());
@@ -50,6 +53,14 @@ public class CliCommands {
     public void addCommand(String command, Options options, String description) {
         commands.put(command, options);
         commandDescMap.put(command, description);
+    }
+
+    
+    /**  Add options that is associated with the command. */
+    public void addCommand(String command, Options options, String description, String example) {
+        commands.put(command, options);
+        commandDescMap.put(command, description);
+        commandExampleMap.put(command, example);
     }
 
     
@@ -95,7 +106,7 @@ public class CliCommands {
 
 
     public void printHelp(String programName) {
-        System.out.println("\n## Program name: " + programName + "\n");
+        System.out.println("\n## Synopsis\n    " + programName + "\n");
 
         System.out.println("\n## Commands\n");
 
@@ -120,7 +131,25 @@ public class CliCommands {
             System.out.println("");
         }
 
+
+        if (this.commandExampleMap.size() > 0) {
+            System.out.println("\n## Examples\n");
+            for (String command : this.commandExampleMap.keySet()) {
+                System.out.println("\n\n###" + command);
+                System.out.println(this.commandExampleMap.get(command));
+            }
+        }
+
+        
     }
+
+
+    
+    public void setCommandExample(String command, String example) {
+        this.commandExampleMap.put(command, example);
+    }
+
+
 
 }
 
