@@ -1,6 +1,8 @@
 package com.github.oogasawa.utility.cli;
 
+import java.util.StringJoiner;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -22,12 +24,17 @@ public class CliCommands {
 
     TreeMap<String, String> commandExampleMap = new TreeMap<>();
 
+
+    TreeMap<String, Consumer<CommandLine>> commandActionMap = new TreeMap<>();
+    
+    
     
     Options universalOptions;
 
     /** Command name which is specified in the given command line. */
     String command;
 
+    /** Default constructor. */
     public CliCommands() {
         commands = new TreeMap<String, Options>();
 
@@ -48,6 +55,13 @@ public class CliCommands {
         commands.put(command, options);
     }
 
+    
+    /**  Add options that is associated with the command. */
+    public void addCommand(String command, Options options, Consumer<CommandLine> action) {
+        commands.put(command, options);
+        commandActionMap.put(command, action);
+        
+    }
 
     /**  Add options that is associated with the command. */
     public void addCommand(String command, Options options, String description) {
@@ -55,6 +69,15 @@ public class CliCommands {
         commandDescMap.put(command, description);
     }
 
+
+    /**  Add options that is associated with the command. */
+    public void addCommand(String command, Options options, String description, Consumer<CommandLine> action) {
+        commands.put(command, options);
+        commandDescMap.put(command, description);
+        commandActionMap.put(command, action);
+    }
+
+    
     
     /**  Add options that is associated with the command. */
     public void addCommand(String command, Options options, String description, String example) {
@@ -64,86 +87,98 @@ public class CliCommands {
     }
 
     
+    /**  Add options that is associated with the command. */
+    public void addCommand(String command, Options options, String description, String example, Consumer<CommandLine> action) {
+        commands.put(command, options);
+        commandDescMap.put(command, description);
+        commandExampleMap.put(command, example);
+        commandActionMap.put(command, action);
+    }
 
+
+    
     /** Add options that can be used independently of the cli commands. */
     public void addUniversalOption(Option option) {
         this.universalOptions.addOption(option);
     }
 
 
+
+    public void execute(String command, CommandLine cl) {
+
+        Consumer<CommandLine> action = this.commandActionMap.get(command);
+        if (action != null) {
+            action.accept(cl);
+        }
+    }
+
+
+
+    
     public String getCommand() {
         return this.command;
     }
 
 
+    public boolean hasCommand(String command) {
+        return this.commands.containsKey(command);
+    }
+
+    
 
     public CommandLine parse(String[] args) throws ParseException {
 
-        CommandLine cmd = null;
+        CommandLine cl = null;
 
-        if (args.length == 0) {
-            throw new ParseException("ERROR: No arguments.");
+        if (args.length > 0) {
+
+            String command = args[0];
+            this.command = command;
+
+            Options options = this.commands.get(command);
+            if (options == null) {// not matched
+                CommandLineParser parser = new DefaultParser();
+                cl = parser.parse(this.universalOptions, args);
+            } else {
+                CommandLineParser parser = new DefaultParser();
+                cl = parser.parse(options, args);
+            }
         }
 
-        String command = args[0];
-        this.command = command;
-
-        var options = this.commands.get(command);
-        if (options == null) {// not matched
-            CommandLineParser parser = new DefaultParser();
-            cmd = parser.parse(this.universalOptions, args);
-        }
-        else {
-            CommandLineParser parser = new DefaultParser();
-            cmd = parser.parse(options, args);
-        }
-
-
-        return cmd;
+        return cl;
     }
 
 
+    public void printCommandHelp(String command) {
 
+        Options options = this.commands.get(command);
 
-    public void printHelp(String programName) {
-        System.out.println("\n## Synopsis\n    " + programName + "\n");
-
-        System.out.println("\n## Commands\n");
-
-        for (String command : this.commands.keySet()) {
-
-            if (this.commandDescMap.containsKey(command)) {
-                System.out.println(command + "\n    " + this.commandDescMap.get(command));
-            }
-            else {
-                System.out.println(command + "\n    " + "(No description)");
-            }
-            
-        }
-
-        System.out.println("\n## Options\n");
-        
-        for (String command : this.commands.keySet()) {
-            Options options = this.commands.get(command);
-
-            HelpFormatter hf = new HelpFormatter();
-            hf.printHelp(command, options, true);
-            System.out.println("");
-        }
-
+        HelpFormatter hf = new HelpFormatter();
+        hf.printHelp(command, options, false);
+        System.out.println();
 
         if (this.commandExampleMap.size() > 0) {
             System.out.println("\n## Examples\n");
-            for (String command : this.commandExampleMap.keySet()) {
-                System.out.println("\n\n###" + command);
-                System.out.println(this.commandExampleMap.get(command));
-            }
+            System.out.println(this.commandExampleMap.get(command));
         }
 
-        
     }
 
+    
+    public void printCommandList(String synopsis) {
 
+        System.out.println("\n## Usage\n");
+        System.out.println(synopsis);
+        System.out.println("");
+
+        System.out.println("## Commands\n");
+        commandDescMap.forEach((String command, String description)->{
+                System.out.println(command + "\t" + description);
+            });
+        System.out.println();
+    }
+
+    
     
     public void setCommandExample(String command, String example) {
         this.commandExampleMap.put(command, example);

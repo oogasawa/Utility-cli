@@ -19,73 +19,52 @@ public class App
 {
 
     private static final Logger logger = Logger.getLogger(App.class.getName());
+
+    String      synopsis = "java -jar Utility-cli-fat.jar <command> <options>";
+    CliCommands cmds     = new CliCommands();
+
     
     public static void main( String[] args )
     {
-
-        var helpStr = "java -jar Utility-cli-fat.jar <command> <options>";
-        var cli = new CliCommands();
-
-        cli.addCommand("line:get_columns", tsvGetColumnsOptions(),
-                       "Get columns from each line.");
-
+        App app = new App();
         
-        cli.addCommand("tsv:get_columns", tsvGetColumnsOptions(),
-                       "Get columns from TSV file.");
-
+        app.setupCommands();
 
         try {
 
-            CommandLine cmd = cli.parse(args);
-
-            if (cli.getCommand() == null) {
-                // check universal options.
-                if (cmd.hasOption("h") || cmd.hasOption("help")) {
-                    cli.printHelp(helpStr);
-                }
-
+            CommandLine cl = app.cmds.parse(args);
+            String command = app.cmds.getCommand();
+            
+            if (command == null) {
+                app.cmds.printCommandList(app.synopsis);
             }
-            else if (cli.getCommand().equals("line:get_columns")) {
-                
-                String[] columnNumbers = cmd.getOptionValues("column");
-                String delimiter = cmd.getOptionValue("delimiter", "\\s+");
-                
-                BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-                reader.lines()
-                    .map((String line)->line.split(delimiter)) // line to columns
-                    .map((String[] columns)->ColumnSelector.select(columns, columnNumbers))
-                    .forEach((List<String> selected)->ColumnSelector.println(selected));
-            }
-
-            else if (cli.getCommand().equals("tsv:get_columns")) {
-
-                String[] columnNumbers = cmd.getOptionValues("column");
-                
-                BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-                reader.lines()
-                    .map((String line)->StringUtil.splitByTab(line))
-                    .map((List<String> columns)->ColumnSelector.select(columns, columnNumbers))
-                    .forEach((List<String> selected)->ColumnSelector.println(selected));
-
-            }
-            else if (cli.getCommand().equals("dummy")) {
-
+            else if (app.cmds.hasCommand(command)) {
+                app.cmds.execute(command, cl);
             }
             else {
-                cli.printHelp(helpStr);
+                System.err.println("The specified command is not available: " + app.cmds.getCommand());
+                app.cmds.printCommandList(app.synopsis);
             }
 
         } catch (ParseException e) {
-            System.err.println("Parsing failed.  Reason: " + e.getMessage());
-            cli.printHelp(helpStr);
+            System.err.println("Parsing failed.  Reason: " + e.getMessage() + "\n");
+            app.cmds.printCommandHelp(app.cmds.getCommand());
         } 
             
     
     }
 
 
+    
+    public void setupCommands() {
+    
+        lineGetColumnsCommand();
+        tsvGetColumnsCommand();
 
-    public static Options lineGetColumnsOptions() {
+    }
+
+
+    public void lineGetColumnsCommand() {
         Options opts = new Options();
 
         opts.addOption(Option.builder("column")
@@ -107,12 +86,25 @@ public class App
                         .build());
 
 
-        return opts;
+    
+        this.cmds.addCommand("line:get_columns", opts,
+                       "Get columns from each line.",
+                       (CommandLine cl)-> {
+                            String[] columnNumbers = cl.getOptionValues("column");
+                            String delimiter = cl.getOptionValue("delimiter", "\\s+");
+
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                            reader.lines()
+                                .map((String line) -> line.split(delimiter)) // line to columns
+                                .map((String[] columns) -> ColumnSelector.select(columns, columnNumbers))
+                                .forEach((List<String> selected) -> ColumnSelector.println(selected));
+                       });
+
     }
 
 
     
-    public static Options tsvGetColumnsOptions() {
+    public void tsvGetColumnsCommand() {
         Options opts = new Options();
 
         opts.addOption(Option.builder("column")
@@ -124,7 +116,20 @@ public class App
                         .required(true)
                         .build());
 
-        return opts;
+
+
+        this.cmds.addCommand("tsv:get_columns", opts,
+                       "Get columns from TSV file.",
+                        (CommandLine cl)-> {
+                            String[] columnNumbers = cl.getOptionValues("column");
+                
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                            reader.lines()
+                                .map((String line)->StringUtil.splitByTab(line))
+                                .map((List<String> columns)->ColumnSelector.select(columns, columnNumbers))
+                                .forEach((List<String> selected)->ColumnSelector.println(selected));
+                        });
+
     }
 
 
