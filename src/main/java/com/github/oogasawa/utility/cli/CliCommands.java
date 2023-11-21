@@ -1,6 +1,5 @@
 package com.github.oogasawa.utility.cli;
 
-import java.util.StringJoiner;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 

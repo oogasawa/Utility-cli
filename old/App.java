@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 import java.io.InputStreamReader;
 
 import com.github.oogasawa.utility.cli.line.ColumnSelector;
-import com.github.oogasawa.utility.types.string.StringUtil;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -20,7 +19,7 @@ public class App
 
     private static final Logger logger = Logger.getLogger(App.class.getName());
 
-    String      synopsis = "java -jar Utility-cli-fat.jar <command> <options>";
+    String      synopsis = "java -jar Utility-cli-VERSION-fat.jar <command> <options>";
     CliCommands cmds     = new CliCommands();
 
     
@@ -115,7 +114,6 @@ public class App
                         .desc("Column number (0, 1, 2, ...)")
                         .required(true)
                         .build());
-
 
 
         this.cmds.addCommand("tsv:get_columns", opts,
