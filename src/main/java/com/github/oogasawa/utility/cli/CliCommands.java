@@ -172,7 +172,15 @@ public class CliCommands {
 
         System.out.println("## Commands\n");
         commandDescMap.forEach((String command, String description)->{
-                System.out.println(command + "\t" + description);
+                if (command.length()<16) {
+                    command = String.format("%-16s", command);
+                }
+                else {
+                    int width = ((command.length() + 4)/4)*4;
+                    String f = "%-" + String.valueOf(width) + "s";
+                    command = String.format(f, command);
+                }
+                System.out.println(command + description);
             });
         System.out.println();
     }
