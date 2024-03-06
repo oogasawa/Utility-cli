@@ -1,14 +1,6 @@
 package com.github.oogasawa.utility.cli;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.util.List;
 import java.util.TreeSet;
-import java.util.logging.Logger;
-import java.io.InputStreamReader;
-
-//import com.github.oogasawa.utility.cli.line.ColumnSelector;
-//import com.github.oogasawa.utility.types.string.StringUtil;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -19,8 +11,6 @@ import org.apache.commons.cli.ParseException;
 
 public class App
 {
-
-    private static final Logger logger = Logger.getLogger(App.class.getName());
 
     String      synopsis = "java -jar Utility-cli-VERSION-fat.jar <command> <options>";
     CliCommands cmds     = new CliCommands();
@@ -58,14 +48,33 @@ public class App
 
 
     
+    /** Calls all command definition methods
+     * to register the command name, its command line options
+     * and its action in the CliCommands object.
+     */
     public void setupCommands() {
     
         differenceCommand();
+        filterCommand();
+        getColumnsCommand();
         splitCommand();
 
     }
 
 
+    // ------------------------------------------------------------
+    // Command definitions (consisting of a name definition,
+    // a command line option definition, and a command behavior definition)
+    // can be written together using the command definition method,
+    // which facilitates structurization and readability.
+    // 
+    // The command definition method registers
+    // the command name, its command line options
+    // and its action in the CliCommands object.
+    // ------------------------------------------------------------
+
+
+    
     public void differenceCommand() {
         Options opts = new Options();
 
@@ -129,7 +138,7 @@ public class App
         
         
         this.cmds.addCommand("filter", opts,
-                       "Choose columns from each line (tab delimited).",
+                       "Filter lines using given conditions.",
                        (CommandLine cl)-> {
                             String columnsStr = cl.getOptionValue("columns");
                             StdinOperation.getColumns(columnsStr);
@@ -191,9 +200,6 @@ public class App
                        });
 
     }
-
-
-
     
 
 }
