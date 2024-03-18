@@ -1,5 +1,6 @@
 package com.github.oogasawa.utility.cli;
 
+import java.nio.file.Path;
 import java.util.TreeSet;
 
 import org.apache.commons.cli.CommandLine;
@@ -103,8 +104,8 @@ public class App
                             String file1 = cl.getOptionValue("file1");
                             String file2 = cl.getOptionValue("file2");
                             SetOperation s = new SetOperation();
-                            TreeSet<String> set1 = s.read(file1);
-                            TreeSet<String> set2 = s.read(file2);
+                            TreeSet<String> set1 = s.read(Path.of(file1));
+                            TreeSet<String> set2 = s.read(Path.of(file2));
                             TreeSet<String> result = s.difference(set1, set2);
                             s.print(result);
                        });
