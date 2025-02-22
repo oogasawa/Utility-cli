@@ -9,7 +9,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 
-
 public class App
 {
 
@@ -20,13 +19,14 @@ public class App
     public static void main( String[] args )
     {
         App app = new App();
-        
+
+        // Loads the settings related to command-line options.
         app.setupCommands();
 
         try {
 
             CommandLine cl = app.cmds.parse(args);
-            String command = app.cmds.getCommand();
+            String command = app.cmds.getGivenCommand();
             
             if (command == null) {
                 app.cmds.printCommandList(app.synopsis);
@@ -35,31 +35,35 @@ public class App
                 app.cmds.execute(command, cl);
             }
             else {
-                System.err.println("The specified command is not available: " + app.cmds.getCommand());
+                System.err.println("The specified command is not available: " + app.cmds.getGivenCommand());
                 app.cmds.printCommandList(app.synopsis);
             }
 
         } catch (ParseException e) {
             System.err.println("Parsing failed.  Reason: " + e.getMessage() + "\n");
-            app.cmds.printCommandHelp(app.cmds.getCommand());
+            app.cmds.printCommandHelp(app.cmds.getGivenCommand());
         } 
             
     
     }
 
-
     
-    /** Calls all command definition methods
-     * to register the command name, its command line options
-     * and its action in the CliCommands object.
+    /**
+     * Calls all command definition methods to register each command name, its command-line options,
+     * and its associated action in the {@code CliCommands} object.
      */
     public void setupCommands() {
-    
         differenceCommand();
         filterCommand();
         getColumnsCommand();
         splitCommand();
 
+
+        // Command definition methods can also be structured in other classes
+        // to prevent the App class from becoming too large.
+        JarCommands jarCommands = new JarCommands();
+        jarCommands.setupCommands(this.cmds);
+        
     }
 
 
@@ -75,8 +79,7 @@ public class App
     // ------------------------------------------------------------
 
 
-    
-    public void differenceCommand() {
+    public  void differenceCommand() {
         Options opts = new Options();
 
         opts.addOption(Option.builder("file1")
@@ -203,4 +206,10 @@ public class App
     }
     
 
+
+
+    
+
+
+    
 }

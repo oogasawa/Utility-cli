@@ -1,5 +1,9 @@
 package com.github.oogasawa.utility.cli;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
@@ -15,28 +19,59 @@ import org.apache.commons.cli.ParseException;
 
 public class CliCommands {
 
-    /** Map of command name and its options. */
-    TreeMap<String, Options> commands;
 
-    /** Map of command name and its description. */
-    TreeMap<String, String> commandDescMap = new TreeMap<>();
+    /** 
+     * A map that associates each command name with its options.
+     * This map contains all available command names.
+     */
+    private TreeMap<String, Options> commands = new TreeMap<>();
 
-    TreeMap<String, String> commandExampleMap = new TreeMap<>();
+    /** 
+     * A map that stores command names and their descriptions.
+     * This map only contains entries for commands that have descriptions.
+     * Commands without descriptions are not included in this map.
+     */
+    private TreeMap<String, String> commandDescMap = new TreeMap<>();
+
+    /** 
+     * A map that associates a command name with its corresponding action.
+     * This map only includes commands that have an associated action.
+     * Commands without an action are not stored in this map.
+     */
+    private TreeMap<String, Consumer<CommandLine>> commandActionMap = new TreeMap<>();
 
 
-    TreeMap<String, Consumer<CommandLine>> commandActionMap = new TreeMap<>();
+    /**
+     * A map that associates a command name with its category. Every command name in the
+     * {@code commands} map is present in this map. If a command does not have a specific category,
+     * it is assigned the default category {@code String the.defaultCategoryName = "zz_Other"},
+     * ensuring that it appears at the end of the list when category names are sorted.
+     *
+     * @see #addCommand(String, Options)
+     * @see #addCommand(String, Options, Consumer)
+     * @see #addCommand(String, Options, String)
+     * @see #addCommand(String, Options, String, Consumer)
+     */
+    private TreeMap<String, String> commandCategoryMap = new TreeMap<>();
+
+    private String defaultCategoryName = "zz_Other";
     
-    
-    
-    Options universalOptions;
+    /** 
+     * A map that stores category names and their descriptions.
+     * This map only includes categories that have a description.
+     * Categories without descriptions are not included.
+     */
+    private TreeMap<String, String> categoryDescriptionMap = new TreeMap<>();
+
+
+    /** Options not related to a specific command. */
+    Options universalOptions = null;
 
     /** Command name which is specified in the given command line. */
-    String command;
+    String givenCommand = null;
 
     /** Default constructor. */
     public CliCommands() {
-        commands = new TreeMap<String, Options>();
-
 
         this.universalOptions = new Options();
         this.universalOptions.addOption(Option.builder()
@@ -49,49 +84,120 @@ public class CliCommands {
                                         .build());
     }
 
-    /**  Add options that is associated with the command. */
+
+    /**
+     * Adds a command and its associated options. The command is assigned the default category.
+     *
+     * @param command The name of the command.
+     * @param options The options associated with the command.
+     */
     public void addCommand(String command, Options options) {
         commands.put(command, options);
+        commandCategoryMap.put(command, defaultCategoryName);
     }
 
-    
-    /**  Add options that is associated with the command. */
+    /**
+     * Adds a command with its associated options and execution action. The command is assigned the
+     * default category.
+     *
+     * @param command The name of the command.
+     * @param options The options associated with the command.
+     * @param action The action to be executed when the command is invoked.
+     */
     public void addCommand(String command, Options options, Consumer<CommandLine> action) {
         commands.put(command, options);
         commandActionMap.put(command, action);
-        
+        commandCategoryMap.put(command, defaultCategoryName);
     }
 
-    /**  Add options that is associated with the command. */
+    /**
+     * Adds a command with its associated options and description. The command is assigned the
+     * default category.
+     *
+     * @param command The name of the command.
+     * @param options The options associated with the command.
+     * @param description The description of the command.
+     */
     public void addCommand(String command, Options options, String description) {
         commands.put(command, options);
         commandDescMap.put(command, description);
+        commandCategoryMap.put(command, defaultCategoryName);
     }
 
-
-    /**  Add options that is associated with the command. */
-    public void addCommand(String command, Options options, String description, Consumer<CommandLine> action) {
+    /**
+     * Adds a command with its associated options, description, and execution action. The command is
+     * assigned the default category.
+     *
+     * @param command The name of the command.
+     * @param options The options associated with the command.
+     * @param description The description of the command.
+     * @param action The action to be executed when the command is invoked.
+     */
+    public void addCommand(String command, Options options, String description,
+            Consumer<CommandLine> action) {
         commands.put(command, options);
         commandDescMap.put(command, description);
         commandActionMap.put(command, action);
+        commandCategoryMap.put(command, defaultCategoryName);
     }
 
-    
-    
-    /**  Add options that is associated with the command. */
-    public void addCommand(String command, Options options, String description, String example) {
+    /**
+     * Adds a command with its associated options under a specific category.
+     *
+     * @param category The category to which the command belongs.
+     * @param command The name of the command.
+     * @param options The options associated with the command.
+     */
+    public void addCommand(String category, String command, Options options) {
         commands.put(command, options);
-        commandDescMap.put(command, description);
-        commandExampleMap.put(command, example);
+        commandCategoryMap.put(command, category);
     }
 
-    
-    /**  Add options that is associated with the command. */
-    public void addCommand(String command, Options options, String description, String example, Consumer<CommandLine> action) {
+    /**
+     * Adds a command with its associated options and execution action under a specific category.
+     *
+     * @param category The category to which the command belongs.
+     * @param command The name of the command.
+     * @param options The options associated with the command.
+     * @param action The action to be executed when the command is invoked.
+     */
+    public void addCommand(String category, String command, Options options,
+            Consumer<CommandLine> action) {
         commands.put(command, options);
-        commandDescMap.put(command, description);
-        commandExampleMap.put(command, example);
         commandActionMap.put(command, action);
+        commandCategoryMap.put(command, category);
+    }
+
+    /**
+     * Adds a command with its associated options and description under a specific category.
+     *
+     * @param category The category to which the command belongs.
+     * @param command The name of the command.
+     * @param options The options associated with the command.
+     * @param description The description of the command.
+     */
+    public void addCommand(String category, String command, Options options, String description) {
+        commands.put(command, options);
+        commandDescMap.put(command, description);
+        commandCategoryMap.put(command, category);
+    }
+
+    /**
+     * Adds a command with its associated options, description, and execution action under a
+     * specific category.
+     *
+     * @param category The category to which the command belongs.
+     * @param command The name of the command.
+     * @param options The options associated with the command.
+     * @param description The description of the command.
+     * @param action The action to be executed when the command is invoked.
+     */
+    public void addCommand(String category, String command, Options options, String description,
+            Consumer<CommandLine> action) {
+        commands.put(command, options);
+        commandDescMap.put(command, description);
+        commandActionMap.put(command, action);
+        commandCategoryMap.put(command, category);
     }
 
 
@@ -102,29 +208,51 @@ public class CliCommands {
     }
 
 
-
-    public void execute(String command, CommandLine cl) {
-
-        Consumer<CommandLine> action = this.commandActionMap.get(command);
+    /**
+     * Executes the action associated with the given command. If the command has a registered
+     * action, it is executed with the provided {@code CommandLine} instance. If no action is
+     * associated with the command, this method does nothing.
+     *
+     * @param givenCommand The command whose action should be executed.
+     * @param cl The {@code CommandLine} instance passed to the action.
+     */
+    public void execute(String givenCommand, CommandLine cl) {
+        Consumer<CommandLine> action = this.commandActionMap.get(givenCommand);
         if (action != null) {
             action.accept(cl);
         }
     }
 
 
-
-    
-    public String getCommand() {
-        return this.command;
+    /**
+     * Returns the command name provided via command-line arguments. This method requires that the
+     * {@code parse} method has been executed beforehand; otherwise, it will return {@code null}.
+     *
+     * @return The command name extracted from the command-line arguments.
+     */
+    public String getGivenCommand() {
+        return this.givenCommand;
     }
 
 
+    /**
+     * Checks whether the program recognizes the given command. This method requires that the
+     * {@code parse} method has been executed beforehand; otherwise, the result may be unreliable.
+     *
+     * @param command The command name to check.
+     * @return {@code true} if the program recognizes the given command, {@code false} otherwise.
+     */
     public boolean hasCommand(String command) {
         return this.commands.containsKey(command);
     }
 
     
 
+    /**
+     * Parses the given command-line arguments.
+     *
+     * @param args The command-line arguments provided as a {@code String[]} array.
+     */
     public CommandLine parse(String[] args) throws ParseException {
 
         CommandLine cl = null;
@@ -132,7 +260,7 @@ public class CliCommands {
         if (args.length > 0) {
 
             String command = args[0];
-            this.command = command;
+            this.givenCommand = command;
 
             Options options = this.commands.get(command);
             if (options == null) {// not matched
@@ -148,6 +276,11 @@ public class CliCommands {
     }
 
 
+    /**
+     * Displays the description for the given command, including a list of its command-line options.
+     *
+     * @param command The name of the command whose description and options should be displayed.
+     */
     public void printCommandHelp(String command) {
 
         Options options = this.commands.get(command);
@@ -156,22 +289,47 @@ public class CliCommands {
         hf.printHelp(command, options, false);
         System.out.println();
 
-        if (this.commandExampleMap.size() > 0) {
-            System.out.println("\n## Examples\n");
-            System.out.println(this.commandExampleMap.get(command));
+        if (this.commandDescMap.containsKey(command)) {
+            System.out.println("\n## Description\n");
+            System.out.println(this.commandDescMap.get(command));
         }
 
     }
 
+
     
-    public void printCommandList(String synopsis) {
+    
+    private TreeMap<String, List<String>> calcCategoryToCommand() {
+        TreeMap<String, List<String>> result = new TreeMap<>();
+        for (Map.Entry<String, String> entry : this.commandCategoryMap.entrySet()) {
+            String command = entry.getKey();
+            String category = entry.getValue();
 
-        System.out.println("\n## Usage\n");
-        System.out.println(synopsis);
-        System.out.println("");
+            // categoryToCommand にカテゴリーがなければ新しいリストを作成
+            result.computeIfAbsent(category, k -> new ArrayList<>()).add(command);
+        }
+        return result;
+    }
 
-        System.out.println("## Commands\n");
-        commandDescMap.forEach((String command, String description)->{
+
+    private String extractFirstLine(String str) {
+        String multiLineString = "Hello, World!\nThis is a test.\nAnother line.";
+
+        String firstLine = multiLineString.split("\n", 2)[0];
+
+        return firstLine;
+    }
+
+
+    /**
+     * Displays a brief description for each command in the given list.
+     *
+     * @param commands The list of command names whose brief descriptions should be displayed.
+     */
+    public void printCommandList(List<String> commands) {
+
+        for (String command: commands) {
+            String description = commandDescMap.get(command);
                 if (command.length()<16) {
                     command = String.format("%-16s", command);
                 }
@@ -180,17 +338,51 @@ public class CliCommands {
                     String f = "%-" + String.valueOf(width) + "s";
                     command = String.format(f, command);
                 }
-                System.out.println(command + description);
-            });
-        System.out.println();
+                System.out.println(command + extractFirstLine(description));
+            };
     }
+    
 
-    
-    
-    public void setCommandExample(String command, String example) {
-        this.commandExampleMap.put(command, example);
+    public void printCommandList(String synopsis) {
+
+        System.out.println("\n## Usage\n");
+        System.out.println(synopsis);
+        System.out.println("");
+
+        boolean hasCategory = false;
+        TreeMap<String, List<String>> categoryToCommand = calcCategoryToCommand();
+
+        for (Map.Entry<String, List<String>> entry : categoryToCommand.entrySet()) {
+            String category = entry.getKey();
+            List<String> commands = entry.getValue();
+            Collections.sort(commands);
+
+            if (category.equals(this.defaultCategoryName)) {
+
+                if (hasCategory == true) {
+                    System.out.println("\n## Other Commands");
+                }
+                else {
+                    System.out.println("\n## Commands");
+                }
+                
+            }
+            else {
+                hasCategory = true;
+                System.out.println("\n## " + category);
+            }
+
+            System.out.println();
+            // print description of the category.
+            if (categoryDescriptionMap.containsKey(category)) {
+                System.out.println(categoryDescriptionMap.get(category));
+            }
+            // print commands of the category.
+            printCommandList(commands);
+            System.out.println();
+        }
+        
     }
-
 
 
 }
