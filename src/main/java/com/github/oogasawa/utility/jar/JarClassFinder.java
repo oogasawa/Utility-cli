@@ -6,8 +6,12 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class JarClassFinder {
 
+    private static final Logger logger = LoggerFactory.getLogger(JarClassFinder.class);
 
     public static void main(String[] args) {
         if (args.length != 2) {
@@ -18,12 +22,8 @@ public class JarClassFinder {
         String className = args[0];
         Path rootDir = Paths.get(args[1]);
 
-        String result = findJarContainingClass(className, rootDir);
-        if (result != null) {
-            System.out.println(result);
-        } else {
-            System.out.println("Class not found in any JAR under " + rootDir);
-        }
+        findJarContainingClass(className, rootDir);
+
     }
 
 
@@ -35,20 +35,22 @@ public class JarClassFinder {
      * @param rootDir   The root directory where JAR files should be searched.
      * @return A string containing the matching JAR file path, module type, and module name, or null if not found.
      */
-    public static String findJarContainingClass(String className, Path rootDir) {
+    public static void findJarContainingClass(String className, Path rootDir) {
         String classFilePath = className.replace('.', '/') + ".class";
 
+        logger.debug("Searching for class file: " + classFilePath);
+        
         try (Stream<Path> paths = Files.walk(rootDir)) {
-            return paths.filter(path -> path.toString().endsWith(".jar"))
-                        .map(Path::toFile)
-                        .map(file -> checkJarForClass(file, classFilePath))
-                        .filter(result -> result != null)
-                        .findFirst()
-                        .orElse(null);
+            paths.filter(path -> path.toString().endsWith(".jar"))
+                .map(Path::toFile)
+                .map(file -> checkJarForClass(file, classFilePath))
+                .filter(result -> result != null)
+                .forEach(result -> System.out.println(result));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+
     }
 
     /**
@@ -58,13 +60,14 @@ public class JarClassFinder {
      * @param classFilePath The class file path (e.g., "javafx/application/Platform.class").
      * @return A string containing the JAR file path, module type, and module name if the class is found; otherwise null.
      */
-    private static String checkJarForClass(java.io.File jarFile, String classFilePath) {
+    public static String checkJarForClass(java.io.File jarFile, String classFilePath) {
+        
         try (JarFile jar = new JarFile(jarFile)) {
             if (jar.stream().map(JarEntry::getName).anyMatch(name -> name.equals(classFilePath))) {
                 String moduleType = JarModuleScanner.getModuleType(jar);
                 String moduleName = JarModuleScanner.getModuleName(jar);
-                return String.format("JAR: %s\n  Type: %s\n  Module Name: %s\n",
-                        jarFile.getAbsolutePath(), moduleType, moduleName);
+                return String.format("JAR: %s\n  Type: %s\n  Module Name: %s\n Found: %s\n",
+                        jarFile.getAbsolutePath(), moduleType, moduleName, classFilePath);
             }
         } catch (IOException e) {
             System.err.println("Error reading JAR file: " + jarFile);

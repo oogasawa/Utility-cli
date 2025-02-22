@@ -313,10 +313,7 @@ public class CliCommands {
 
 
     private String extractFirstLine(String str) {
-        String multiLineString = "Hello, World!\nThis is a test.\nAnother line.";
-
-        String firstLine = multiLineString.split("\n", 2)[0];
-
+        String firstLine = str.split("\n", 2)[0];
         return firstLine;
     }
 
