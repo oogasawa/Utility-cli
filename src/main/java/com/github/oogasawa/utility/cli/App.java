@@ -13,7 +13,7 @@ public class App
 {
 
     String      synopsis = "java -jar Utility-cli-VERSION-fat.jar <command> <options>";
-    CliCommands cmds     = new CliCommands();
+    CommandRepository cmds     = new CommandRepository();
 
     
     public static void main( String[] args )

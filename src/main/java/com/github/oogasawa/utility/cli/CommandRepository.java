@@ -17,7 +17,7 @@ import org.apache.commons.cli.ParseException;
 
 
 
-public class CliCommands {
+public class CommandRepository {
 
 
     /** 
@@ -71,7 +71,7 @@ public class CliCommands {
     String givenCommand = null;
 
     /** Default constructor. */
-    public CliCommands() {
+    public CommandRepository() {
 
         this.universalOptions = new Options();
         this.universalOptions.addOption(Option.builder()

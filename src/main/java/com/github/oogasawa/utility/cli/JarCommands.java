@@ -12,11 +12,11 @@ import org.apache.commons.cli.Options;
 
 public class JarCommands {
 
-    CliCommands cmds = null;
+    CommandRepository cmdRepos = null;
     
-    public void setupCommands(CliCommands cmds) {
+    public void setupCommands(CommandRepository cmds) {
 
-        this.cmds = cmds;
+        this.cmdRepos = cmds;
         
         jarListClassesCommand();
         jarListJarsCommand();
@@ -51,7 +51,7 @@ public class JarCommands {
                        .required(true)
                        .build());
 
-        this.cmds.addCommand("jar commands",
+        this.cmdRepos.addCommand("jar commands",
                              "jar:listClasses", opts,
                 "Lists all Classes in a given Jar file.",
                  (CommandLine cl) -> {
@@ -75,7 +75,7 @@ public class JarCommands {
                        .required(true)
                        .build());
 
-        this.cmds.addCommand("jar commands",
+        this.cmdRepos.addCommand("jar commands",
                              "jar:listJars", opts,
                 "Finds and lists all JAR files in a given directory recursively.",
                  (CommandLine cl) -> {
@@ -99,7 +99,7 @@ public class JarCommands {
                        .required(true)
                        .build());
 
-        this.cmds.addCommand("jar commands", "jar:scanModules", opts,
+        this.cmdRepos.addCommand("jar commands", "jar:scanModules", opts,
                 "Return information about the JPMS module (type, name, etc.) for JAR files under the base directory.",
                  (CommandLine cl) -> {
                     String baseDir = cl.getOptionValue("baseDir");
@@ -132,7 +132,7 @@ public class JarCommands {
                        .build());
 
         
-        this.cmds.addCommand("jar commands", "jar:searchClasses", opts,
+        this.cmdRepos.addCommand("jar commands", "jar:searchClasses", opts,
                 "Searches for a JAR file containing the specified class under the given root directory.",
                  (CommandLine cl) -> {
                     String baseDir = cl.getOptionValue("baseDir");

@@ -30,7 +30,7 @@
     </appender>
 
     <!-- Root logger for normal logs (INFO and below) -->
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="ASYNC_STDOUT" />
     </root>
 
