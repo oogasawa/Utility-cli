@@ -3,16 +3,16 @@ package com.github.oogasawa.utility.jar;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 
 
@@ -65,8 +65,10 @@ public class JarModuleScanner {
             String moduleType = getModuleType(jarFile);
             String moduleName = getModuleName(jarFile);
 
-            System.out.printf("JAR: %s%n  Type: %s%n  Module Name: %s%n%n",
-                              jarPath, moduleType, moduleName);
+            // シンプルにJSON形式で出力
+            System.out.println(String.format("{\"jar\":\"%s\",\"type\":\"%s\",\"moduleName\":\"%s\"}",
+                                             jarPath.toString(), moduleType, moduleName));
+
         } catch (IOException e) {
             System.err.println("Error reading JAR file: " + jarPath);
             e.printStackTrace();
