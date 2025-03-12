@@ -302,6 +302,7 @@ public class CommandRepository {
             System.out.println("\n## Description\n");
             System.out.println(this.commandDescMap.get(command));
         }
+        System.out.println();
     }
 
 

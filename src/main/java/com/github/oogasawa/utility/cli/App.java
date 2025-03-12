@@ -97,7 +97,7 @@ public class App {
                 .build());
 
         this.cmds.addCommand("difference", opts,
-                "Calculate the difference between two sets.",
+                "Computes the difference between two sets of data.",
                 (CommandLine cl) -> {
                     String file1 = cl.getOptionValue("file1");
                     String file2 = cl.getOptionValue("file2");
@@ -135,7 +135,7 @@ public class App {
                 .build());
 
         this.cmds.addCommand("filter", opts,
-                "Filter lines using given conditions.",
+                "Filters lines based on specified conditions.",
                 (CommandLine cl) -> {
                     String columnsStr = cl.getOptionValue("column");
                     StdinOperation.getColumns(columnsStr);
@@ -158,7 +158,7 @@ public class App {
                 .build());
 
         this.cmds.addCommand("getColumns", opts,
-                "Choose columns from each line (tab delimited).",
+                "Extracts specific columns from tab-delimited lines.",
                 (CommandLine cl) -> {
                     String columnsStr = cl.getOptionValue("columns");
                     StdinOperation.getColumns(columnsStr);
@@ -181,8 +181,41 @@ public class App {
                 .required(false)
                 .build());
 
+        String description = """
+            Splits each line into separate fields.
+
+            For example, given the following data file
+            
+            $ cat taxonomy.dump 
+            1|all||synonym|
+            1|root||scientific name|
+            2|Bacteria|Bacteria <bacteria>|scientific name|
+            2|bacteria||blast name|
+            2|"Bacteria" Cavalier-Smith 1987||authority|
+            2|Bacteria (ex Cavalier-Smith 1987)||synonym|
+            2|Bacteria Woese et al. 2024||synonym|
+            2|"Bacteriobiota" Luketa 2012||authority|
+            2|Bacteriobiota||synonym|
+            2|eubacteria||genbank common name|
+
+            calling it as shown below will split it into tab-separated format at the "|" character.
+
+            $ cat taxonomy.dump | java -jar target/Utility-cli-3.1.0-fat.jar split -d "\\|"
+            1	all		synonym
+            1	root		scientific name
+            2	Bacteria	Bacteria <bacteria>	scientific name
+            2	bacteria		blast name
+            2	"Bacteria" Cavalier-Smith 1987		authority
+            2	Bacteria (ex Cavalier-Smith 1987)		synonym
+            2	Bacteria Woese et al. 2024		synonym
+            2	"Bacteriobiota" Luketa 2012		authority
+            2	Bacteriobiota		synonym
+            2	eubacteria		genbank common name
+
+            """;
+        
         this.cmds.addCommand("split", opts,
-                "Split each line into fields.",
+                             description,
                 (CommandLine cl) -> {
                     String delimiter = cl.getOptionValue("delimiter", "\\t");
                     StdinOperation.splitLines(delimiter);

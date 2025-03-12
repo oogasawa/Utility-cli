@@ -1,256 +1,319 @@
-# Utility-cli
 
-## Overview.
+# Utility-cli: A Command Line Parser for Subcommand-based Interfaces
 
-Like docker or maven, the program name + command name + command line options allow a number of functions to be performed. 
-The `DefaultParser` of the Apache Commons CLI is used to parse command line options.
+## About
 
-### Program invocation
+Utility-cli is a command-line parser for subcommand-based interfaces, built on top of Apache Commons CLI. It is designed to keep the parsing logic structured and manageable, preventing the parsing methods from becoming excessively long even as the number of subcommands increases.
 
-A program written using `Utility-cli` can be called as follows
 
-``` sh
-java -jar your_program.jar command options
+## Example Usage
+
+When the program is launched without specifying a command name, it displays a list of available commands.
+
+(Utility-cli itself serves as an example of how this tool can be used.)
+
+
 ```
-
-If the program is executed without a command name, a list of commands will be output. 
-(Note that in this case, `Utility-cli` itself is both a library and an example program.)
-
-``` sh
-$ java -jar target/Utility-cli-2.1.0-fat.jar 
+$ java -jar target/Utility-cli-3.1.0-fat.jar 
 
 ## Usage
 
 java -jar Utility-cli-VERSION-fat.jar <command> <options>
 
-## Commands
 
-difference   Calculate the difference between two sets.
-filter       Choose columns from each line (tab delimited).
-getColumns   Choose columns from each line (tab delimited).
-split        Split each line into fields.
-```
+## jar commands
 
-### Output of command usage
-
-Running the command with the command name will display help for the command.
-
-``` sh
-$ java -jar target/Utility-cli-2.1.0-fat.jar difference
-Parsing failed. Reason: Missing required options: f1, f2
-
-Usage: difference
- -f1,--file1 <file1> f1 of the set difference f1 - f2
- -f2,--file2 <file2> f2 of the set difference f1 - f2
-```
-
-### Program invocation using jbang
-
-Program calls can be further shortened by using [jbang]().
-
-``` sh
-$ cli.java 
-[jbang] [WARN] Detected missing or out-of-date dependencies in cache.
-[jbang] Resolving dependencies...
-[jbang] com.github.oogasawa:Utility-cli:2.1.0
-[jbang] Dependencies resolved
-
-## Usage
-
-java -jar Utility-cli-VERSION-fat.jar <command> <options> ## Commands
-
-## Commands
-
-difference   Calculate the difference between two sets.
-filter       Choose columns from each line (tab delimited).
-getColumns   Choose columns from each line (tab delimited).
-split        Split each line into fields.
-```
+jar:listClasses Lists all classes contained in the specified JAR file.
+jar:listJars    Recursively searches for and lists all JAR files in the given directory.
+jar:scanModules Scans JAR files under the specified base directory and retrieves information about their JPMS modules (type, name, etc.).
+jar:searchClasses   Searches for a JAR file containing the specified class within the given root directory.
 
 
-Similarly, if you specify the command name and run the command, help for the command will be displayed.
+## Other Commands
 
-```
-$ cli.java difference
-Reason: Missing required options: f1, f2
-
-usage: difference
- -f1,--file1 <file1> f1 of the set difference f1 - f2
- -f2,--file2 <file2> f2 of the set difference f1 - f2
-```
-
-The contents of cli.java is as follows.
-
-``` sh
-//usr/bin/env jbang "$0" "$@" ; exit $?
-//DEPS com.github.oogasawa:Utility-cli:2.1.0
-
-class cli {
-  public static void main(String[] args) throws Exception {
-    com.github.oogasawa.utility.cli.App.main(args);
-  }
-}
-```
-
-## How to install
-
-Since it is not registered in the Maven repository, install it under `.m2` as follows.
-
-### Operating environment
-
-- JDK21 or later
-- Apache Commons CLI
-
-### How to build and install
-
-Since we are using the Maven wrapper, there is no need to install maven.
-
-``` sh
-git clone https://github.com/oogasawa/Utilit-cli
-cd Utility-cli
-. /mvnw clean install
-```
-
-## How to add to `pom.xml`
-
-``` xml
-<dependency>
-    <groupId>com.github.oogasawa</groupId>
-    <artifactId>Utility-cli</artifactId>
-    <version>2.1.0</version>
-</dependency> <dependency> <artifactId>Utility-cli</artifactId
-```
-
-## How to use
-
-`App.java` of `Utility-cli` itself is an example of usage.
-
-- https://github.com/oogasawa/Utility-cli/blob/main/src/main/java/com/github/oogasawa/utility/cli/App.java
-
-
----
-
-## 概要
-
-dockerやmavenのように、プログラム名 + コマンド名 + コマンドラインオプションで、多数の機能を実行できるようにする。
-コマンドラインオプションのパースには[Apache Commons CLI](https://commons.apache.org/proper/commons-cli/index.html)のDefaultParserを使っている。
-
-
-`Utility-cli`を使って書かれたプログラムは以下のように呼ぶことができる。
-
-```
-java -jar your_program.jar command options
-```
-
-コマンド名なしで実行するとコマンドのリストが出力される。
-（この場合`Utility-cli`自身がライブラリであると同時にプログラムの例になっていることに注意。）
-
-```
-$ java -jar target/Utility-cli-2.1.0-fat.jar 
-
-## Usage
-
-java -jar Utility-cli-VERSION-fat.jar <command> <options>
-
-## Commands
-
-difference      Calculate the difference between two sets.
-filter          Choose columns from each line (tab delimited).
-getColumns      Choose columns from each line (tab delimited).
-split           Split each line into fields.
-```
-
-コマンド名を指定して実行すると、コマンドのヘルプが表示される。
-
-```
-$ java -jar target/Utility-cli-2.1.0-fat.jar difference
-Parsing failed.  Reason: Missing required options: f1, f2
-
-usage: difference
- -f1,--file1 <file1>   f1 of the set difference f1 - f2
- -f2,--file2 <file2>   f2 of the set difference f1 - f2
+difference      Computes the difference between two sets of data.
+filter          Filters lines based on specified conditions.
+getColumns      Extracts specific columns from tab-delimited lines.
+split           Splits each line into separate fields.
 
 ```
 
-プログラム呼び出しは[jbang](https://www.jbang.dev/)を使うと更に短縮できる。
+When launched with a command name, the tool displays usage information for that command.
 
 ```
-$ cli.java 
-[jbang] [WARN] Detected missing or out-of-date dependencies in cache.
-[jbang] Resolving dependencies...
-[jbang]    com.github.oogasawa:Utility-cli:2.1.0
-[jbang] Dependencies resolved
+$ java -jar target/Utility-cli-3.1.0-fat.jar split -h
+Parsing failed. Reason: Unrecognized option: -h
 
-## Usage
-
-java -jar Utility-cli-VERSION-fat.jar <command> <options>
-
-## Commands
-
-difference      Calculate the difference between two sets.
-filter          Choose columns from each line (tab delimited).
-getColumns      Choose columns from each line (tab delimited).
-split           Split each line into fields.
-```
-
-同様にコマンド名を指定して実行すると、コマンドのヘルプが表示される。
-
-```
-$ cli.java difference
-Parsing failed.  Reason: Missing required options: f1, f2
-
-usage: difference
- -f1,--file1 <file1>   f1 of the set difference f1 - f2
- -f2,--file2 <file2>   f2 of the set difference f1 - f2
-```
+usage: split
+ -d,--delimiter <delimiter>   Field delimiter (default: tab character).
 
 
-ここで`cli.java`の内容は以下の通り。
+## Description
 
-```
-//usr/bin/env jbang "$0" "$@" ; exit $?
-//DEPS com.github.oogasawa:Utility-cli:2.1.0
+Splits each line into separate fields.
 
-class cli {
-  public static void main(String[] args) throws Exception {
-    com.github.oogasawa.utility.cli.App.main(args);
-  }
-}
+For example, given the following data file
+
+$ cat taxonomy.dump
+1|all||synonym|
+1|root||scientific name|
+2|Bacteria|Bacteria <bacteria>|scientific name|
+2|bacteria||blast name|
+2|"Bacteria" Cavalier-Smith 1987||authority|
+2|Bacteria (ex Cavalier-Smith 1987)||synonym|
+2|Bacteria Woese et al. 2024||synonym|
+2|"Bacteriobiota" Luketa 2012||authority|
+2|Bacteriobiota||synonym|
+2|eubacteria||genbank common name|
+
+calling it as shown below will split it into tab-separated format at the "|" character.
+
+$ cat taxonomy.dump | java -jar target/Utility-cli-3.1.0-fat.jar split -d "\|"
+1	all		synonym
+1	root		scientific name
+2	Bacteria	Bacteria <bacteria>	scientific name
+2	bacteria		blast name
+2	"Bacteria" Cavalier-Smith 1987		authority
+2	Bacteria (ex Cavalier-Smith 1987)		synonym
+2	Bacteria Woese et al. 2024		synonym
+2	"Bacteriobiota" Luketa 2012		authority
+2	Bacteriobiota		synonym
+2	eubacteria		genbank common name
+
 ```
 
 
-## インストール方法
+## Installation Instructions  
 
-Maven repositoryには登録されていないので、以下のようにして`.m2`以下にインストールする。
+This program has been tested in the following environments:  
+- OpenJDK 21.0.2  
+- Apache Maven 3.9.9  
 
-### 動作環境
-
-- JDK21以降
-- Apache Commons CLI
-
-### ビルドおよびインストールの方法
-
-Maven wrapperを使っているのでmavenのインストールは不要。
+The installation process follows the standard Apache Maven procedure.  
+Currently, it is not available in the Maven Repository, so please obtain it from GitHub.
 
 ```
-git clone https://github.com/oogasawa/Utilit-cli
+git clone https://github.com/oogasawa/Utility-cli
 cd Utility-cli
 ./mvnw clean install
 ```
 
-### `pom.xml`への追加方法
+
+## How to Use the Command-Line Parser  
+
+- The `main` method follows a fixed structure and remains the same in every implementation.  
+- The `setupCommands()` method defines all subcommands.  
+  It is also possible to define a group of subcommands in a separate class.
+
+```java
+
+import com.github.oogasawa.utility.cli.CommandRepository;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+
+public class App {
+
+    /**
+     * The command-line usage synopsis.
+     */
+    String synopsis = "java -jar your_program-<VERSION>-fat.jar <command> <options>";
+    
+    /**
+     * The repository that holds command definitions and executes them.
+     */
+    CommandRepository cmds = new CommandRepository();
+
+    /**
+     * The main method initializes the application and processes command-line input.
+     * 
+     * @param args the command-line arguments
+     */
+    public static void main(String[] args) {
+        App app = new App();
+
+        // Load the command definitions.
+        app.setupCommands();
+
+        try {
+            CommandLine cl = app.cmds.parse(args);
+            String command = app.cmds.getGivenCommand();
+
+            if (command == null) {
+                app.cmds.printCommandList(app.synopsis);
+            } else if (app.cmds.hasCommand(command)) {
+                app.cmds.execute(command, cl);
+            } else {
+                System.err.println("Error: Unknown command: " + app.cmds.getGivenCommand());
+                System.err.println("Use one of the available commands listed below:");
+                app.cmds.printCommandList(app.synopsis);
+            }
+        } catch (ParseException e) {
+            System.err.println("Error: Failed to parse the command. Reason: " + e.getMessage());
+            System.err.println("See the help below for correct usage:");
+            app.cmds.printCommandHelp(app.cmds.getGivenCommand());
+        }
+    }
+
+
+
+    /**
+     * Registers all available commands by invoking their respective setup methods.
+     */
+    public void setupCommands() {
+        getColumnsCommand();
+        splitCommand();
+        // ... 
+
+        // Register additional commands from another class.
+        JarCommands jarCommands = new JarCommands();
+        jarCommands.setupCommands(this.cmds);
+    }
+
+
+    /**
+     * Defines the "getColumns" command, which extracts specific columns from tab-delimited input.
+     */
+    public void getColumnsCommand() {
+        Options opts = new Options();
+
+        opts.addOption(Option.builder("columns")
+                .option("c")
+                .longOpt("columns")
+                .hasArg(true)
+                .argName("columns")
+                .desc("Comma-separated list of columns to retrieve (e.g., \"3,0,5-10\").")
+                .required(true)
+                .build());
+
+        this.cmds.addCommand("getColumns", opts,
+                "Extracts specific columns from tab-delimited lines.",
+                (CommandLine cl) -> {
+                    String columnsStr = cl.getOptionValue("columns");
+                    StdinOperation.getColumns(columnsStr);
+                });
+    }
+```
+
+
+Subcommands and their command-line options are defined using methods like the example below:
+
+- The `Options` class directly utilizes Apache Commons CLI, so please refer to its documentation for details.  
+- The `description` field can span multiple lines, as shown in the example. In such cases, the first line is used as the short description of the subcommand.  
+- When a subcommand is executed, the lambda function passed as an argument to the `this.cmds.addOption()` method is invoked.
+
+
+```java
+    /**
+     * Defines the "split" command, which splits each line into fields based on a delimiter.
+     */
+    public void splitCommand() {
+        Options opts = new Options();
+
+        opts.addOption(Option.builder("delimiter")
+                .option("d")
+                .longOpt("delimiter")
+                .hasArg(true)
+                .argName("delimiter")
+                .desc("Field delimiter (default: tab character).")
+                .required(false)
+                .build());
+
+        String description = """
+            Splits each line into separate fields.
+
+            For example, given the following data file
+            
+            $ cat taxonomy.dump 
+            1|all||synonym|
+            1|root||scientific name|
+            2|Bacteria|Bacteria <bacteria>|scientific name|
+            2|bacteria||blast name|
+            2|"Bacteria" Cavalier-Smith 1987||authority|
+            2|Bacteria (ex Cavalier-Smith 1987)||synonym|
+            2|Bacteria Woese et al. 2024||synonym|
+            2|"Bacteriobiota" Luketa 2012||authority|
+            2|Bacteriobiota||synonym|
+            2|eubacteria||genbank common name|
+
+            calling it as shown below will split it into tab-separated format at the "|" character.
+
+            $ cat taxonomy.dump | java -jar target/Utility-cli-3.1.0-fat.jar split -d "\\|"
+            1	all		synonym
+            1	root		scientific name
+            2	Bacteria	Bacteria <bacteria>	scientific name
+            2	bacteria		blast name
+            2	"Bacteria" Cavalier-Smith 1987		authority
+            2	Bacteria (ex Cavalier-Smith 1987)		synonym
+            2	Bacteria Woese et al. 2024		synonym
+            2	"Bacteriobiota" Luketa 2012		authority
+            2	Bacteriobiota		synonym
+            2	eubacteria		genbank common name
+
+            """;
+        
+        this.cmds.addCommand("split", opts,
+                             description,
+                (CommandLine cl) -> {
+                    String delimiter = cl.getOptionValue("delimiter", "\\t");
+                    StdinOperation.splitLines(delimiter);
+                });
+    }
+}
 
 ```
-<dependency>
-    <groupId>com.github.oogasawa</groupId>
-    <artifactId>Utility-cli</artifactId>
-    <version>2.1.0</version>
-</dependency>
+
+
+To split a group of subcommands into a separate class, follow the approach below.
+
+
+```
+public class JarCommands {
+
+    /**
+     * The command repository used to register commands.
+     */
+    CommandRepository cmdRepos = null;
+    
+    /**
+     * Registers all JAR-related commands in the given command repository.
+     * 
+     * @param cmds The command repository to register commands with.
+     */
+    public void setupCommands(CommandRepository cmds) {
+        this.cmdRepos = cmds;
+        
+        jarListClassesCommand();
+    }
+
+    /**
+     * Registers the "jar:listClasses" command, which lists all classes in a given JAR file.
+     */
+    public void jarListClassesCommand() {
+        Options opts = new Options();
+
+        opts.addOption(Option.builder("jar")
+                .option("j")
+                .longOpt("jar")
+                .hasArg(true)
+                .argName("jar")
+                .desc("The JAR file to list classes from.")
+                .required(true)
+                .build());
+
+        this.cmdRepos.addCommand("jar commands", "jar:listClasses", opts,
+                "Lists all classes contained in the specified JAR file.",
+                (CommandLine cl) -> {
+                    String jarFile = cl.getOptionValue("jar");
+                    JarClassLister.listClasses(Path.of(jarFile));
+                });
+    }
+
+  // ...
+}
 ```
 
-## 使用方法
-
-Utility-cliのApp.java自体が使用方法の例になっている。
-
-- https://github.com/oogasawa/Utility-cli/blob/main/src/main/java/com/github/oogasawa/utility/cli/App.java
 

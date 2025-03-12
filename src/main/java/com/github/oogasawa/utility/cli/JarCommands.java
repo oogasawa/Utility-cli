@@ -54,7 +54,7 @@ public class JarCommands {
                 .build());
 
         this.cmdRepos.addCommand("jar commands", "jar:listClasses", opts,
-                "Lists all classes in a given JAR file.",
+                "Lists all classes contained in the specified JAR file.",
                 (CommandLine cl) -> {
                     String jarFile = cl.getOptionValue("jar");
                     JarClassLister.listClasses(Path.of(jarFile));
@@ -77,7 +77,7 @@ public class JarCommands {
                 .build());
 
         this.cmdRepos.addCommand("jar commands", "jar:listJars", opts,
-                "Finds and lists all JAR files in a given directory recursively.",
+                "Recursively searches for and lists all JAR files in the given directory.",
                 (CommandLine cl) -> {
                     String baseDir = cl.getOptionValue("baseDir");
                     JarFileFinder.listJarFiles(Path.of(baseDir));
@@ -100,7 +100,7 @@ public class JarCommands {
                 .build());
 
         this.cmdRepos.addCommand("jar commands", "jar:scanModules", opts,
-                "Return information about the JPMS module (type, name, etc.) for JAR files under the base directory.",
+                "Scans JAR files under the specified base directory and retrieves information about their JPMS modules (type, name, etc.).",
                 (CommandLine cl) -> {
                     String baseDir = cl.getOptionValue("baseDir");
                     JarModuleScanner.scan(Paths.get(baseDir));
@@ -132,7 +132,7 @@ public class JarCommands {
                 .build());
 
         this.cmdRepos.addCommand("jar commands", "jar:searchClasses", opts,
-                "Searches for a JAR file containing the specified class under the given root directory.",
+                "Searches for a JAR file containing the specified class within the given root directory.",
                 (CommandLine cl) -> {
                     String baseDir = cl.getOptionValue("baseDir");
                     String className = cl.getOptionValue("className");
