@@ -9,10 +9,25 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The {@code JarClassFinder} class provides functionality to search for a specific class
+ * within JAR files located under a given root directory. It helps in identifying which
+ * JAR file contains a specific fully qualified class name.
+ */
 public class JarClassFinder {
 
+    /** Logger instance for logging debug and error messages. */
     private static final Logger logger = LoggerFactory.getLogger(JarClassFinder.class);
 
+    /**
+     * Main method to execute the search operation.
+     * 
+     * @param args Command-line arguments. Expected arguments:
+     *             <ul>
+     *             <li>args[0]: Fully qualified class name to search for (e.g., "javafx.application.Platform").</li>
+     *             <li>args[1]: Root directory where JAR files should be searched.</li>
+     *             </ul>
+     */
     public static void main(String[] args) {
         if (args.length != 2) {
             System.err.println("Usage: java JarClassFinder <class-name> <root-dir>");
@@ -23,17 +38,13 @@ public class JarClassFinder {
         Path rootDir = Paths.get(args[1]);
 
         findJarContainingClass(className, rootDir);
-
     }
 
-
-    
     /**
      * Searches for a JAR file containing the specified class under the given root directory.
-     *
+     * 
      * @param className The fully qualified class name to search for (e.g., "javafx.application.Platform").
      * @param rootDir   The root directory where JAR files should be searched.
-     * @return A string containing the matching JAR file path, module type, and module name, or null if not found.
      */
     public static void findJarContainingClass(String className, Path rootDir) {
         String classFilePath = className.replace('.', '/') + ".class";
@@ -45,36 +56,34 @@ public class JarClassFinder {
                 .map(Path::toFile)
                 .map(file -> checkJarForClass(file, classFilePath))
                 .filter(result -> result != null)
-                .forEach(result -> System.out.println(result));
-
+                .forEach(System.out::println);
         } catch (IOException e) {
+            System.err.println("Error while searching for JAR files: " + e.getMessage());
             e.printStackTrace();
         }
-
     }
 
     /**
      * Checks if a JAR file contains the specified class and retrieves its module information.
-     *
+     * 
      * @param jarFile The JAR file to check.
      * @param classFilePath The class file path (e.g., "javafx/application/Platform.class").
-     * @return A string containing the JAR file path, module type, and module name if the class is found; otherwise null.
+     * @return A formatted string containing the JAR file path, module type, module name, and found class file path;
+     *         returns {@code null} if the class is not found in the JAR file.
      */
     public static String checkJarForClass(java.io.File jarFile, String classFilePath) {
-        
         try (JarFile jar = new JarFile(jarFile)) {
             if (jar.stream().map(JarEntry::getName).anyMatch(name -> name.equals(classFilePath))) {
                 String moduleType = JarModuleScanner.getModuleType(jar);
                 String moduleName = JarModuleScanner.getModuleName(jar);
-                return String.format("JAR: %s\n  Type: %s\n  Module Name: %s\n Found: %s\n",
+                return String.format("JAR: %s\n  Type: %s\n  Module Name: %s\n  Found: %s\n",
                         jarFile.getAbsolutePath(), moduleType, moduleName, classFilePath);
             }
         } catch (IOException e) {
-            System.err.println("Error reading JAR file: " + jarFile);
+            System.err.println("Error reading JAR file: " + jarFile.getAbsolutePath());
             e.printStackTrace();
         }
         return null;
     }
-
-    
 }
+

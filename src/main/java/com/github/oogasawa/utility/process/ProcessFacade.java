@@ -103,10 +103,16 @@ public class ProcessFacade {
      */    
     public class StdioData {
 
-        String stdout;
-        String stderr;
-        int exitValue;
+        String stdout = null;
+        String stderr = null;
+        int exitValue = -99;
 
+        public void clear() {
+            stdout = null;
+            stderr = null;
+            exitValue = -99;
+        }
+        
         // --- setters and getters ---
 
         public String getStdout() {
@@ -188,6 +194,7 @@ public class ProcessFacade {
      * @return A {@link StdioData} object containing the standard output, standard error output, and exit code of the executed process.
      */
     public StdioData exec(String... command)  {
+        
         if (stdioMode == StdioMode.DISCARD) {
             return execWithIgnoringOutput(command);
         }

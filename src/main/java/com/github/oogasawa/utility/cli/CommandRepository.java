@@ -15,80 +15,80 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-
-
+/**
+ * The {@code CommandRepository} class manages command definitions and execution logic
+ * in a command-line interface (CLI) application. It maintains mappings of commands,
+ * their options, descriptions, categories, and execution actions.
+ *
+ * This class allows commands to be categorized for better organization and ensures
+ * that commands are executed properly when invoked. It also provides utilities
+ * to parse arguments, print command lists, and display command help messages.
+ */
 public class CommandRepository {
 
-
-    /** 
+    /**
      * A map that associates each command name with its options.
      * This map contains all available command names.
      */
     private TreeMap<String, Options> commands = new TreeMap<>();
 
-    /** 
+    /**
      * A map that stores command names and their descriptions.
      * This map only contains entries for commands that have descriptions.
-     * Commands without descriptions are not included in this map.
      */
     private TreeMap<String, String> commandDescMap = new TreeMap<>();
 
-    /** 
-     * A map that associates a command name with its corresponding action.
-     * This map only includes commands that have an associated action.
-     * Commands without an action are not stored in this map.
+    /**
+     * A map that associates a command name with its corresponding execution action.
      */
     private TreeMap<String, Consumer<CommandLine>> commandActionMap = new TreeMap<>();
 
-
     /**
-     * A map that associates a command name with its category. Every command name in the
-     * {@code commands} map is present in this map. If a command does not have a specific category,
-     * it is assigned the default category {@code String the.defaultCategoryName = "zz_Other"},
-     * ensuring that it appears at the end of the list when category names are sorted.
-     *
-     * @see #addCommand(String, Options)
-     * @see #addCommand(String, Options, Consumer)
-     * @see #addCommand(String, Options, String)
-     * @see #addCommand(String, Options, String, Consumer)
+     * A map that associates each command name with a category.
+     * If a command does not belong to a specific category, it is assigned
+     * the default category {@code zz_Other}.
      */
     private TreeMap<String, String> commandCategoryMap = new TreeMap<>();
 
+    /**
+     * The default category name for commands that do not belong to a specific category.
+     */
     private String defaultCategoryName = "zz_Other";
     
-    /** 
+    /**
      * A map that stores category names and their descriptions.
-     * This map only includes categories that have a description.
-     * Categories without descriptions are not included.
      */
     private TreeMap<String, String> categoryDescriptionMap = new TreeMap<>();
 
-
-    /** Options not related to a specific command. */
+    /**
+     * Options that can be used independently of a specific command.
+     */
     Options universalOptions = null;
 
-    /** Command name which is specified in the given command line. */
+    /**
+     * The command name specified in the given command line.
+     */
     String givenCommand = null;
 
-    /** Default constructor. */
+    /**
+     * Default constructor initializes universal options.
+     */
     public CommandRepository() {
-
         this.universalOptions = new Options();
         this.universalOptions.addOption(Option.builder()
                                         .option("h")
                                         .longOpt("help")
                                         .hasArg(false)
                                         .argName("help")
-                                        .desc("print help message")
+                                        .desc("Print help message")
                                         .required(false)
                                         .build());
     }
 
-
     /**
-     * Adds a command and its associated options. The command is assigned the default category.
-     *
-     * @param command The name of the command.
+     * Adds a command and its associated options, assigning it to the default category.
+     * 
+     * @param command The command name.
      * @param options The options associated with the command.
      */
     public void addCommand(String command, Options options) {
@@ -97,12 +97,11 @@ public class CommandRepository {
     }
 
     /**
-     * Adds a command with its associated options and execution action. The command is assigned the
-     * default category.
-     *
-     * @param command The name of the command.
+     * Adds a command with its options and an execution action, assigning it to the default category.
+     * 
+     * @param command The command name.
      * @param options The options associated with the command.
-     * @param action The action to be executed when the command is invoked.
+     * @param action The action to execute when the command is invoked.
      */
     public void addCommand(String command, Options options, Consumer<CommandLine> action) {
         commands.put(command, options);
@@ -110,7 +109,8 @@ public class CommandRepository {
         commandCategoryMap.put(command, defaultCategoryName);
     }
 
-    /**
+
+/**
      * Adds a command with its associated options and description. The command is assigned the
      * default category.
      *
@@ -208,13 +208,12 @@ public class CommandRepository {
     }
 
 
+    
     /**
-     * Executes the action associated with the given command. If the command has a registered
-     * action, it is executed with the provided {@code CommandLine} instance. If no action is
-     * associated with the command, this method does nothing.
-     *
-     * @param givenCommand The command whose action should be executed.
-     * @param cl The {@code CommandLine} instance passed to the action.
+     * Executes the action associated with a given command.
+     * 
+     * @param givenCommand The command to execute.
+     * @param cl The parsed command-line arguments.
      */
     public void execute(String givenCommand, CommandLine cl) {
         Consumer<CommandLine> action = this.commandActionMap.get(givenCommand);
@@ -235,67 +234,39 @@ public class CommandRepository {
     }
 
 
+    
     /**
-     * Checks whether the program recognizes the given command. This method requires that the
-     * {@code parse} method has been executed beforehand; otherwise, the result may be unreliable.
-     *
+     * Checks whether the given command exists in the repository.
+     * 
      * @param command The command name to check.
-     * @return {@code true} if the program recognizes the given command, {@code false} otherwise.
+     * @return {@code true} if the command exists, {@code false} otherwise.
      */
     public boolean hasCommand(String command) {
         return this.commands.containsKey(command);
     }
 
-    
-
     /**
-     * Parses the given command-line arguments.
-     *
-     * @param args The command-line arguments provided as a {@code String[]} array.
+     * Parses the given command-line arguments and extracts the specified command.
+     * 
+     * @param args The command-line arguments.
+     * @return The parsed {@code CommandLine} object.
+     * @throws ParseException If command-line parsing fails.
      */
     public CommandLine parse(String[] args) throws ParseException {
-
         CommandLine cl = null;
-
         if (args.length > 0) {
-
             String command = args[0];
             this.givenCommand = command;
-
             Options options = this.commands.get(command);
-            if (options == null) {// not matched
-                CommandLineParser parser = new DefaultParser();
+            CommandLineParser parser = new DefaultParser();
+            if (options == null) {
                 cl = parser.parse(this.universalOptions, args);
             } else {
-                CommandLineParser parser = new DefaultParser();
                 cl = parser.parse(options, args);
             }
         }
-
         return cl;
     }
-
-
-    /**
-     * Displays the description for the given command, including a list of its command-line options.
-     *
-     * @param command The name of the command whose description and options should be displayed.
-     */
-    public void printCommandHelp(String command) {
-
-        Options options = this.commands.get(command);
-
-        HelpFormatter hf = new HelpFormatter();
-        hf.printHelp(command, options, false);
-        System.out.println();
-
-        if (this.commandDescMap.containsKey(command)) {
-            System.out.println("\n## Description\n");
-            System.out.println(this.commandDescMap.get(command));
-        }
-
-    }
-
 
     
     
@@ -315,6 +286,22 @@ public class CommandRepository {
     private String extractFirstLine(String str) {
         String firstLine = str.split("\n", 2)[0];
         return firstLine;
+    }
+
+    /**
+     * Displays help information for a specific command.
+     * 
+     * @param command The command name whose help message should be displayed.
+     */
+    public void printCommandHelp(String command) {
+        Options options = this.commands.get(command);
+        HelpFormatter hf = new HelpFormatter();
+        hf.printHelp(command, options, false);
+        System.out.println();
+        if (this.commandDescMap.containsKey(command)) {
+            System.out.println("\n## Description\n");
+            System.out.println(this.commandDescMap.get(command));
+        }
     }
 
 
@@ -338,50 +325,39 @@ public class CommandRepository {
                 System.out.println(command + extractFirstLine(description));
             };
     }
+
     
-
+    /**
+     * Displays a categorized list of available commands along with their descriptions.
+     * 
+     * @param synopsis The usage syntax for the application.
+     */
     public void printCommandList(String synopsis) {
-
         System.out.println("\n## Usage\n");
         System.out.println(synopsis);
-        System.out.println("");
-
+        System.out.println();
         boolean hasCategory = false;
         TreeMap<String, List<String>> categoryToCommand = calcCategoryToCommand();
-
         for (Map.Entry<String, List<String>> entry : categoryToCommand.entrySet()) {
             String category = entry.getKey();
             List<String> commands = entry.getValue();
             Collections.sort(commands);
-
             if (category.equals(this.defaultCategoryName)) {
-
-                if (hasCategory == true) {
+                if (hasCategory) {
                     System.out.println("\n## Other Commands");
-                }
-                else {
+                } else {
                     System.out.println("\n## Commands");
                 }
-                
-            }
-            else {
+            } else {
                 hasCategory = true;
                 System.out.println("\n## " + category);
             }
-
             System.out.println();
-            // print description of the category.
             if (categoryDescriptionMap.containsKey(category)) {
                 System.out.println(categoryDescriptionMap.get(category));
             }
-            // print commands of the category.
             printCommandList(commands);
             System.out.println();
         }
-        
     }
-
-
 }
-
-

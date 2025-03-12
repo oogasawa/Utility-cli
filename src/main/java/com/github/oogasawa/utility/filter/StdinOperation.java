@@ -1,4 +1,4 @@
-package com.github.oogasawa.utility.cli;
+package com.github.oogasawa.utility.filter;
 
 import java.util.Scanner;
 import java.util.regex.Pattern;
