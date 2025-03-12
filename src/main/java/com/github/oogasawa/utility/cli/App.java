@@ -43,17 +43,19 @@ public class App {
         try {
             CommandLine cl = app.cmds.parse(args);
             String command = app.cmds.getGivenCommand();
-            
+
             if (command == null) {
                 app.cmds.printCommandList(app.synopsis);
             } else if (app.cmds.hasCommand(command)) {
                 app.cmds.execute(command, cl);
             } else {
-                System.err.println("The specified command is not available: " + app.cmds.getGivenCommand());
+                System.err.println("Error: Unknown command: " + app.cmds.getGivenCommand());
+                System.err.println("Use one of the available commands listed below:");
                 app.cmds.printCommandList(app.synopsis);
             }
         } catch (ParseException e) {
-            System.err.println("Parsing failed. Reason: " + e.getMessage() + "\n");
+            System.err.println("Error: Failed to parse the command. Reason: " + e.getMessage());
+            System.err.println("See the help below for correct usage:");
             app.cmds.printCommandHelp(app.cmds.getGivenCommand());
         }
     }
