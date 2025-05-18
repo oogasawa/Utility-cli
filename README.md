@@ -271,6 +271,11 @@ To split a group of subcommands into a separate class, follow the approach below
 
 
 ```
+import com.github.oogasawa.utility.cli.CommandRepository;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+
 public class JarCommands {
 
     /**
