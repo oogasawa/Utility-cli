@@ -16,7 +16,7 @@ public class RunWithStats {
             if (gpuFlg) {
                 // Start nvidia-smi
                 nvidiaSmi = new ProcessBuilder("bash", "-c", String.format(
-                        "exec nvidia-smi --query-gpu=timestamp,index,utilization.gpu,utilization.memory,memory.used,memory.total "
+                        "exec nvidia-smi --query-gpu=timestamp,index,utilization.gpu,utilization.memory,memory.used,memory.total,temperature.gpu,fan.speed,power.draw,power.limit "
                                 + "--format=csv,nounits --loop=%d > %s.nvidia-smi.out",
                         interval, basename)).start();
             }
