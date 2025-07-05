@@ -3,6 +3,8 @@ package com.github.oogasawa.utility.cli;
 import java.nio.file.Path;
 import java.util.TreeSet;
 
+import com.github.oogasawa.utility.jar.JarCommands;
+import com.github.oogasawa.utility.stats.StatsCommands;
 import com.github.oogasawa.utility.filter.SetOperation;
 import com.github.oogasawa.utility.filter.StdinOperation;
 import org.apache.commons.cli.CommandLine;
@@ -72,6 +74,10 @@ public class App {
         // Register additional commands from another class.
         JarCommands jarCommands = new JarCommands();
         jarCommands.setupCommands(this.cmds);
+
+        StatsCommands statsCommands = new StatsCommands();
+        statsCommands.setupCommands(this.cmds);
+        
     }
 
     /**

@@ -1,11 +1,8 @@
-package com.github.oogasawa.utility.cli;
+package com.github.oogasawa.utility.jar;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import com.github.oogasawa.utility.jar.JarClassFinder;
-import com.github.oogasawa.utility.jar.JarClassLister;
-import com.github.oogasawa.utility.jar.JarFileFinder;
-import com.github.oogasawa.utility.jar.JarModuleScanner;
+import com.github.oogasawa.utility.cli.CommandRepository;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
