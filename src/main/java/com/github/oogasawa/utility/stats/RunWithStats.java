@@ -27,7 +27,7 @@ public class RunWithStats {
 
             // Start pidstat
             Process pidstat = new ProcessBuilder("bash", "-c",
-                    String.format("exec pidstat -urdh -t -p %d %d > %s.pidstat.out", pid, interval, basename)).start();
+                    String.format("exec pidstat -urdh -t -p %d --child %d > %s.pidstat.out", pid, interval, basename)).start();
 
             // Wait for main command
             int exitCode = command.waitFor();
