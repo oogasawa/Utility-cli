@@ -6,9 +6,8 @@ import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Logger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The {@code JarClassLister} class provides functionality to list all class files
@@ -18,7 +17,7 @@ import org.slf4j.LoggerFactory;
 public class JarClassLister {
 
     /** Logger instance for logging errors and debugging information. */
-    private static final Logger logger = LoggerFactory.getLogger(JarClassLister.class);
+    private static final Logger logger = Logger.getLogger(JarClassLister.class.getName());
     
     /**
      * Lists all class files contained within a specified JAR file.
@@ -29,7 +28,7 @@ public class JarClassLister {
         File jarFile = jarFilePath.toFile();
 
         if (!jarFile.exists() || !jarFile.isFile()) {
-            logger.error("The specified JAR file does not exist: " + jarFilePath);
+            logger.severe("The specified JAR file does not exist: " + jarFilePath);
             return;
         }
 
@@ -47,7 +46,7 @@ public class JarClassLister {
                 }
             }
         } catch (IOException e) {
-            logger.error("Failed to read the JAR file: " + e.getMessage());
+            logger.severe("Failed to read the JAR file: " + e.getMessage());
         }
     }
 }

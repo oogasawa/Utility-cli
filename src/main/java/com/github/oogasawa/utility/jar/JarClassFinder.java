@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The {@code JarClassFinder} class provides functionality to search for a specific class
@@ -17,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class JarClassFinder {
 
     /** Logger instance for logging debug and error messages. */
-    private static final Logger logger = LoggerFactory.getLogger(JarClassFinder.class);
+    private static final Logger logger = Logger.getLogger(JarClassFinder.class.getName());
 
     /**
      * Main method to execute the search operation.
@@ -49,7 +48,7 @@ public class JarClassFinder {
     public static void findJarContainingClass(String className, Path rootDir) {
         String classFilePath = className.replace('.', '/') + ".class";
 
-        logger.debug("Searching for class file: " + classFilePath);
+        logger.fine("Searching for class file: " + classFilePath);
         
         try (Stream<Path> paths = Files.walk(rootDir)) {
             paths.filter(path -> path.toString().endsWith(".jar"))
