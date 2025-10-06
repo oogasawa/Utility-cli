@@ -103,35 +103,49 @@ cmdRepos.addCommand("batch", options, description, cl -> runBatch(cl));
 
 ### Customizing Help Output with the Builder
 
-Use `UtilityCliHelpFormatterBuilder` when you want precise control of each help section. This example renders Description, Examples, and Options in that order.
+Use `UtilityCliHelpFormatterBuilder` when you need full control over the Description / Examples / Options sections. Multi-line text is supported via Java text blocks, and each string passed to `examples(...)` becomes a separate entry inside the Examples block.
 
 ```java
 import java.util.List;
 
 CommandRepository repository = new CommandRepository();
 
-// Define the command with its core description and options.
-Options options = new Options();
-options.addOption("s", "source", true, "Source directory");
-repository.addCommand("deploy", options, "Deploy static site content to hosting.");
+// Define the command with rich, multi-line documentation.
+String baseDescription = """
+Deploy static site content to the hosting platform.
 
-// Apply global defaults (headings, layout).
+By default the command uploads the `--source` directory and invalidates the CDN cache.
+""";
+
+Options options = new Options();
+options.addOption("s", "source", true, "Source directory to publish");
+options.addOption("p", "profile", true, "Deployment profile (staging, production, ...)");
+repository.addCommand("deploy", options, baseDescription);
+
+// Apply global defaults (headings, layout, wrapping width).
 UtilityCliHelpFormatterBuilder defaults = new UtilityCliHelpFormatterBuilder()
         .usageHeading("Usage")
         .descriptionHeading("Description")
         .examplesHeading("Examples")
         .optionsHeading("Options")
-        .width(96);
-
+        .width(94);
 repository.configureDefaultHelpFormatter(defaults);
 
-// Specialise this command: override description text and supply examples.
+// Specialise the deploy command with an alternate description and curated examples.
 repository.configureCommandHelpFormatter("deploy",
         new UtilityCliHelpFormatterBuilder()
-                .description("Publish a static site from a prepared directory.")
+                .description("""
+Publishes a prepared static site. Runs the following steps:
+  1. Zips the source directory.
+  2. Uploads the archive to object storage.
+  3. Invalidates the CDN cache when --profile=production.
+""" )
                 .examples(List.of(
-                        "deploy --source docs/ --dry-run",
-                        "deploy --source dist/ --profile production")));
+                        "deploy --source docs/ --profile staging",
+                        """
+deploy --source dist/ --profile production \
+  # Uses production credentials and purges the CDN after upload
+""".strip())));
 
 // Somewhere in your CLI entry point, when -h is requested:
 repository.printCommandHelp("deploy");
@@ -144,14 +158,18 @@ Usage:
   deploy [options]
 
 Description:
-  Publish a static site from a prepared directory.
+  Publishes a prepared static site. Runs the following steps:
+    1. Zips the source directory.
+    2. Uploads the archive to object storage.
+    3. Invalidates the CDN cache when --profile=production.
 
 Examples:
-  deploy --source docs/ --dry-run
-  deploy --source dist/ --profile production
+  deploy --source docs/ --profile staging
+  deploy --source dist/ --profile production     # Uses production credentials and purges the CDN after upload
 
 Options:
-    -s,--source <arg>   Source directory
+    -p,--profile <arg>  Deployment profile (staging, production, ...)
+    -s,--source <arg>   Source directory to publish
 ```
 
 
