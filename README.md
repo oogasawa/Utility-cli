@@ -101,6 +101,41 @@ cmdRepos.addCommand("batch", options, description, cl -> runBatch(cl));
 ```
 
 
+### Customizing Help Output with the Builder
+
+Use `UtilityCliHelpFormatterBuilder` when you want finer control over what `-h` prints. Configure defaults once and override per command only where needed.
+
+```java
+import java.util.List;
+
+CommandRepository repository = new CommandRepository();
+
+// Apply global defaults (headings, wrapping width, etc.)
+UtilityCliHelpFormatterBuilder defaults = new UtilityCliHelpFormatterBuilder()
+        .usageHeading("Usage")
+        .descriptionHeading("What It Does")
+        .examplesHeading("Examples")
+        .width(100);
+
+repository.configureDefaultHelpFormatter(defaults);
+
+// Register a command as usual
+Options options = new Options();
+options.addOption("s", "source", true, "Source directory");
+repository.addCommand("deploy", options, "Deploy static site content to hosting.");
+
+// Add command-specific examples/notes
+repository.configureCommandHelpFormatter("deploy",
+        new UtilityCliHelpFormatterBuilder()
+                .examples(List.of(
+                        "deploy --source docs/ --dry-run",
+                        "deploy --source dist/ --profile production")));
+
+// Later, when -h is requested, the builder configuration is applied automatically
+repository.printCommandHelp("deploy");
+```
+
+
 ## Installation Instructions  
 
 This program has been tested in the following environments:  
