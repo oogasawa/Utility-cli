@@ -103,36 +103,55 @@ cmdRepos.addCommand("batch", options, description, cl -> runBatch(cl));
 
 ### Customizing Help Output with the Builder
 
-Use `UtilityCliHelpFormatterBuilder` when you want finer control over what `-h` prints. Configure defaults once and override per command only where needed.
+Use `UtilityCliHelpFormatterBuilder` when you want precise control of each help section. This example renders Description, Examples, and Options in that order.
 
 ```java
 import java.util.List;
 
 CommandRepository repository = new CommandRepository();
 
-// Apply global defaults (headings, wrapping width, etc.)
-UtilityCliHelpFormatterBuilder defaults = new UtilityCliHelpFormatterBuilder()
-        .usageHeading("Usage")
-        .descriptionHeading("What It Does")
-        .examplesHeading("Examples")
-        .width(100);
-
-repository.configureDefaultHelpFormatter(defaults);
-
-// Register a command as usual
+// Define the command with its core description and options.
 Options options = new Options();
 options.addOption("s", "source", true, "Source directory");
 repository.addCommand("deploy", options, "Deploy static site content to hosting.");
 
-// Add command-specific examples/notes
+// Apply global defaults (headings, layout).
+UtilityCliHelpFormatterBuilder defaults = new UtilityCliHelpFormatterBuilder()
+        .usageHeading("Usage")
+        .descriptionHeading("Description")
+        .examplesHeading("Examples")
+        .optionsHeading("Options")
+        .width(96);
+
+repository.configureDefaultHelpFormatter(defaults);
+
+// Specialise this command: override description text and supply examples.
 repository.configureCommandHelpFormatter("deploy",
         new UtilityCliHelpFormatterBuilder()
+                .description("Publish a static site from a prepared directory.")
                 .examples(List.of(
                         "deploy --source docs/ --dry-run",
                         "deploy --source dist/ --profile production")));
 
-// Later, when -h is requested, the builder configuration is applied automatically
+// Somewhere in your CLI entry point, when -h is requested:
 repository.printCommandHelp("deploy");
+```
+
+Rendered help (Description → Examples → Options):
+
+```text
+Usage:
+  deploy [options]
+
+Description:
+  Publish a static site from a prepared directory.
+
+Examples:
+  deploy --source docs/ --dry-run
+  deploy --source dist/ --profile production
+
+Options:
+    -s,--source <arg>   Source directory
 ```
 
 
