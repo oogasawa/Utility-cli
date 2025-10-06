@@ -4,7 +4,7 @@
   <groupId>com.github.oogasawa</groupId>
   <artifactId>Utility-cli</artifactId>
   <name>Utility-cli</name>
-  <version>4.0.0</version>
+  <version>4.2.0</version>
   <url>https://github.com/oogasawa/Utility-cli</url>
   <build>
     <finalName>${project.artifactId}-${project.version}</finalName>

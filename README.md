@@ -14,7 +14,7 @@ When the program is launched without specifying a command name, it displays a li
 
 
 ```
-$ java -jar target/Utility-cli-3.1.0-fat.jar 
+$ java -jar target/Utility-cli-4.2.0-fat.jar 
 
 ## Usage
 
@@ -41,8 +41,7 @@ split           Splits each line into separate fields.
 When launched with a command name, the tool displays usage information for that command.
 
 ```
-$ java -jar target/Utility-cli-3.1.0-fat.jar split -h
-Parsing failed. Reason: Unrecognized option: -h
+$ java -jar target/Utility-cli-4.2.0-fat.jar split -h
 
 usage: split
  -d,--delimiter <delimiter>   Field delimiter (default: tab character).
@@ -68,7 +67,7 @@ $ cat taxonomy.dump
 
 calling it as shown below will split it into tab-separated format at the "|" character.
 
-$ cat taxonomy.dump | java -jar target/Utility-cli-3.1.0-fat.jar split -d "\|"
+$ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0-fat.jar split -d "\|"
 1	all		synonym
 1	root		scientific name
 2	Bacteria	Bacteria <bacteria>	scientific name
@@ -80,6 +79,25 @@ $ cat taxonomy.dump | java -jar target/Utility-cli-3.1.0-fat.jar split -d "\|"
 2	Bacteriobiota		synonym
 2	eubacteria		genbank common name
 
+```
+
+
+## Documenting Command Help
+
+- Each subcommand automatically supports `-h`/`--help`, so contributors can preview usage without triggering parsing errors.
+- Feed multi-line descriptions to `addCommand` to populate the help footer. Embed examples directly in that description.
+- Java text blocks keep the description readable in source code while rendering cleanly in the console:
+
+```java
+String description = """
+        Run a batch job across all workspaces.
+
+        ### Example
+        $ yourapp batch --conf projects.conf --dryRun
+        Shows how to preview a batch job without applying changes.
+        """;
+
+cmdRepos.addCommand("batch", options, description, cl -> runBatch(cl));
 ```
 
 
@@ -142,7 +160,14 @@ public class App {
             CommandLine cl = app.cmds.parse(args);
             String command = app.cmds.getGivenCommand();
 
-            if (command == null) {
+            if (app.cmds.isHelpRequested()) {
+                if (app.cmds.hasCommand(command)) {
+                    app.cmds.printCommandHelp(command);
+                } else {
+                    System.err.println("Error: Unknown command: " + app.cmds.getGivenCommand());
+                    app.cmds.printCommandList(app.synopsis);
+                }
+            } else if (command == null) {
                 app.cmds.printCommandList(app.synopsis);
             } else if (app.cmds.hasCommand(command)) {
                 app.cmds.execute(command, cl);
@@ -180,8 +205,7 @@ public class App {
     public void getColumnsCommand() {
         Options opts = new Options();
 
-        opts.addOption(Option.builder("columns")
-                .option("c")
+        opts.addOption(Option.builder("c")
                 .longOpt("columns")
                 .hasArg(true)
                 .argName("columns")
@@ -203,7 +227,7 @@ Subcommands and their command-line options are defined using methods like the ex
 
 - The `Options` class directly utilizes Apache Commons CLI, so please refer to its documentation for details.  
 - The `description` field can span multiple lines, as shown in the example. In such cases, the first line is used as the short description of the subcommand.  
-- When a subcommand is executed, the lambda function passed as an argument to the `this.cmds.addOption()` method is invoked.
+- When a subcommand is executed, the lambda function passed as an argument to the `this.cmds.addCommand()` method is invoked.
 
 
 ```java
@@ -241,7 +265,7 @@ Subcommands and their command-line options are defined using methods like the ex
 
             calling it as shown below will split it into tab-separated format at the "|" character.
 
-            $ cat taxonomy.dump | java -jar target/Utility-cli-3.1.0-fat.jar split -d "\\|"
+            $ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0-fat.jar split -d "\\|"
             1	all		synonym
             1	root		scientific name
             2	Bacteria	Bacteria <bacteria>	scientific name
@@ -320,5 +344,3 @@ public class JarCommands {
   // ...
 }
 ```
-
-

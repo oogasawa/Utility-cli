@@ -38,7 +38,6 @@ public class App {
      */
     public static void main(String[] args) {
         App app = new App();
-
         // Load the command definitions.
         app.setupCommands();
 
@@ -46,7 +45,14 @@ public class App {
             CommandLine cl = app.cmds.parse(args);
             String command = app.cmds.getGivenCommand();
 
-            if (command == null) {
+            if (app.cmds.isHelpRequested()) {
+                if (app.cmds.hasCommand(command)) {
+                    app.cmds.printCommandHelp(command);
+                } else {
+                    System.err.println("Error: Unknown command: " + app.cmds.getGivenCommand());
+                    app.cmds.printCommandList(app.synopsis);
+                }
+            } else if (command == null) {
                 app.cmds.printCommandList(app.synopsis);
             } else if (app.cmds.hasCommand(command)) {
                 app.cmds.execute(command, cl);
@@ -156,8 +162,7 @@ public class App {
     public void getColumnsCommand() {
         Options opts = new Options();
 
-        opts.addOption(Option.builder("columns")
-                .option("c")
+        opts.addOption(Option.builder("c")
                 .longOpt("columns")
                 .hasArg(true)
                 .argName("columns")
@@ -208,7 +213,7 @@ public class App {
 
             calling it as shown below will split it into tab-separated format at the "|" character.
 
-            $ cat taxonomy.dump | java -jar target/Utility-cli-3.1.0-fat.jar split -d "\\|"
+            $ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0-fat.jar split -d "\\|"
             1	all		synonym
             1	root		scientific name
             2	Bacteria	Bacteria <bacteria>	scientific name

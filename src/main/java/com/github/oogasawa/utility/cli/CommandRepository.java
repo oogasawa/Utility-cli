@@ -1,6 +1,9 @@
 package com.github.oogasawa.utility.cli;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +13,6 @@ import java.util.function.Consumer;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -51,6 +53,16 @@ public class CommandRepository {
     private TreeMap<String, String> commandCategoryMap = new TreeMap<>();
 
     /**
+     * Custom formatter builder per command, applied when rendering help.
+     */
+    private final TreeMap<String, UtilityCliHelpFormatterBuilder> commandHelpFormatterBuilders = new TreeMap<>();
+
+    /**
+     * Default help formatter builder applied before command specific tweaks.
+     */
+    private UtilityCliHelpFormatterBuilder defaultHelpFormatterBuilder;
+
+    /**
      * The default category name for commands that do not belong to a specific category.
      */
     private String defaultCategoryName = "zz_Other";
@@ -69,6 +81,11 @@ public class CommandRepository {
      * The command name specified in the given command line.
      */
     String givenCommand = null;
+
+    /**
+     * Tracks whether the help flag was supplied for the current command.
+     */
+    private boolean helpRequested = false;
 
     /**
      * Default constructor initializes universal options.
@@ -200,6 +217,34 @@ public class CommandRepository {
         commandCategoryMap.put(command, category);
     }
 
+    /**
+     * Sets the default formatter builder applied to every command help render.
+     *
+     * @param builder builder instance copied and stored; {@code null} clears the default configuration
+     */
+    public void configureDefaultHelpFormatter(UtilityCliHelpFormatterBuilder builder) {
+        this.defaultHelpFormatterBuilder = builder == null ? null : builder.copy();
+    }
+
+    /**
+     * Registers a command specific formatter builder applied when rendering its help. If the
+     * command is not yet known, the configuration is stored and picked up once it is registered.
+     *
+     * @param command command name
+     * @param builder builder instance copied and stored; {@code null} removes the existing configuration
+     */
+    public void configureCommandHelpFormatter(String command, UtilityCliHelpFormatterBuilder builder) {
+        if (command == null) {
+            return;
+        }
+
+        if (builder == null) {
+            commandHelpFormatterBuilders.remove(command);
+        } else {
+            commandHelpFormatterBuilders.put(command, builder.copy());
+        }
+    }
+
 
     
     /** Add options that can be used independently of the cli commands. */
@@ -253,16 +298,26 @@ public class CommandRepository {
      * @throws ParseException If command-line parsing fails.
      */
     public CommandLine parse(String[] args) throws ParseException {
+        this.helpRequested = false;
+        this.givenCommand = null;
         CommandLine cl = null;
         if (args.length > 0) {
             String command = args[0];
             this.givenCommand = command;
+            String[] commandArgs = Arrays.copyOfRange(args, 1, args.length);
+
+            if (containsHelpFlag(commandArgs)) {
+                this.helpRequested = true;
+                return null;
+            }
+
             Options options = this.commands.get(command);
             CommandLineParser parser = new DefaultParser();
             if (options == null) {
-                cl = parser.parse(this.universalOptions, args);
+                cl = parser.parse(this.universalOptions, commandArgs);
             } else {
-                cl = parser.parse(options, args);
+                Options merged = mergeOptions(options, this.universalOptions);
+                cl = parser.parse(merged, commandArgs);
             }
         }
         return cl;
@@ -294,15 +349,79 @@ public class CommandRepository {
      * @param command The command name whose help message should be displayed.
      */
     public void printCommandHelp(String command) {
-        Options options = this.commands.get(command);
-        HelpFormatter hf = new HelpFormatter();
-        hf.printHelp(command, options, false);
-        System.out.println();
-        if (this.commandDescMap.containsKey(command)) {
-            System.out.println("\n## Description\n");
-            System.out.println(this.commandDescMap.get(command));
+        if (command == null) {
+            return;
         }
-        System.out.println();
+
+        Options options = this.commands.get(command);
+        UtilityCliHelpFormatterBuilder builder = new UtilityCliHelpFormatterBuilder();
+
+        if (this.defaultHelpFormatterBuilder != null) {
+            builder.mergeFrom(this.defaultHelpFormatterBuilder);
+        }
+
+        UtilityCliHelpFormatterBuilder commandBuilder = this.commandHelpFormatterBuilders.get(command);
+        if (commandBuilder != null) {
+            builder.mergeFrom(commandBuilder);
+        }
+
+        if (!builder.hasOptionsHeading()) {
+            builder.optionsHeading("Command Line Options");
+        }
+
+        String description = this.commandDescMap.get(command);
+        if (!builder.hasDescription() && description != null) {
+            builder.description(description);
+        }
+
+        UtilityCliHelpFormatter formatter = builder.build();
+
+        PrintWriter out = new PrintWriter(System.out, true);
+        formatter.printCommandHelp(out, command, options);
+    }
+
+    /**
+     * Returns {@code true} when the help flag has been requested for the current command.
+     *
+     * @return whether help output should be displayed instead of executing the command
+     */
+    public boolean isHelpRequested() {
+        return this.helpRequested;
+    }
+
+    private boolean containsHelpFlag(String[] args) {
+        for (String arg : args) {
+            if ("-h".equals(arg) || "--help".equals(arg)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Options mergeOptions(Options commandOptions, Options universalOptions) {
+        Options merged = new Options();
+
+        if (commandOptions != null) {
+            Collection<Option> commandOptionList = commandOptions.getOptions();
+            for (Option option : commandOptionList) {
+                merged.addOption((Option) option.clone());
+            }
+        }
+
+        if (universalOptions != null) {
+            Collection<Option> universalOptionList = universalOptions.getOptions();
+            for (Option option : universalOptionList) {
+                String opt = option.getOpt();
+                String longOpt = option.getLongOpt();
+                boolean alreadyPresent = (opt != null && merged.hasOption(opt))
+                        || (longOpt != null && merged.hasOption(longOpt));
+                if (!alreadyPresent) {
+                    merged.addOption((Option) option.clone());
+                }
+            }
+        }
+
+        return merged;
     }
 
 
