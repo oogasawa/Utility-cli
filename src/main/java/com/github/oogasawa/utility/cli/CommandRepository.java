@@ -365,19 +365,44 @@ public class CommandRepository {
             builder.mergeFrom(commandBuilder);
         }
 
-        if (!builder.hasOptionsHeading()) {
-            builder.optionsHeading("Command Line Options");
+        List<UtilityCliHelpFormatter.Section> sections = new ArrayList<>(builder.getSections());
+
+        Options safeOptions = options != null ? options : new Options();
+        boolean hasOptions = !safeOptions.getOptions().isEmpty();
+        String description = this.commandDescMap.get(command);
+
+        if (sections.isEmpty()) {
+            sections.add(UtilityCliHelpFormatter.Section.usage("Usage"));
+            if (description != null && !description.isBlank()) {
+                sections.add(UtilityCliHelpFormatter.Section.commandDescription("Description"));
+            }
+            if (hasOptions) {
+                sections.add(UtilityCliHelpFormatter.Section.options("Options"));
+            }
+        } else {
+            boolean usagePresent = sections.stream()
+                    .anyMatch(section -> section.kind() == UtilityCliHelpFormatter.Section.Kind.USAGE);
+            if (!usagePresent) {
+                sections.add(0, UtilityCliHelpFormatter.Section.usage("Usage"));
+            }
+
+            boolean optionsPresent = sections.stream()
+                    .anyMatch(section -> section.kind() == UtilityCliHelpFormatter.Section.Kind.OPTIONS);
+            if (hasOptions && !optionsPresent) {
+                sections.add(UtilityCliHelpFormatter.Section.options("Options"));
+            }
+
+            if (description == null || description.isBlank()) {
+                sections.removeIf(section -> section.kind() == UtilityCliHelpFormatter.Section.Kind.COMMAND_DESCRIPTION);
+            }
         }
 
-        String description = this.commandDescMap.get(command);
-        if (!builder.hasDescription() && description != null) {
-            builder.description(description);
-        }
+        builder.replaceSections(sections);
 
         UtilityCliHelpFormatter formatter = builder.build();
 
         PrintWriter out = new PrintWriter(System.out, true);
-        formatter.printCommandHelp(out, command, options);
+        formatter.printCommandHelp(out, command, safeOptions, description);
     }
 
     /**

@@ -213,7 +213,7 @@ public class App {
 
             calling it as shown below will split it into tab-separated format at the "|" character.
 
-            $ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0-fat.jar split -d "\\|"
+            $ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0.jar split -d "\\|"
             1	all		synonym
             1	root		scientific name
             2	Bacteria	Bacteria <bacteria>	scientific name

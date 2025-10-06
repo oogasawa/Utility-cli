@@ -2,6 +2,7 @@ package com.github.oogasawa.utility.cli;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -10,18 +11,91 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 
 /**
- * Custom {@link HelpFormatter} that provides a structured help layout with configurable
- * section headings, descriptions, and example blocks without modifying Commons CLI itself.
+ * Custom {@link HelpFormatter} capable of rendering help output as an ordered list of sections.
+ * Sections can represent the computed usage string, option table, the command description, or any
+ * arbitrary custom text supplied by the caller.
  */
 public class UtilityCliHelpFormatter extends HelpFormatter {
 
-    private String usageHeading = "Usage";
-    private String descriptionHeading = "Description";
-    private String optionsHeading = "Options";
-    private String examplesHeading = "Examples";
+    /**
+     * Immutable section descriptor rendered by this formatter.
+     */
+    public static final class Section {
 
-    private String description;
-    private List<String> examples = List.of();
+        /** Section kinds supported by the formatter. */
+        public enum Kind {
+            USAGE,
+            OPTIONS,
+            COMMAND_DESCRIPTION,
+            CUSTOM
+        }
+
+        private final Kind kind;
+        private final String heading;
+        private final List<String> lines;
+
+        private Section(Kind kind, String heading, List<String> lines) {
+            this.kind = Objects.requireNonNull(kind, "kind");
+            this.heading = heading;
+            this.lines = lines == null ? List.of() : List.copyOf(lines);
+        }
+
+        /**
+         * Creates a usage section that will be populated via {@link HelpFormatter#printUsage}.
+         *
+         * @param heading heading label to print before the generated usage text
+         * @return usage section descriptor
+         */
+        public static Section usage(String heading) {
+            return new Section(Kind.USAGE, heading, null);
+        }
+
+        /**
+         * Creates an options section that reuses {@link HelpFormatter#printOptions} for rendering.
+         *
+         * @param heading heading label to print above the options table
+         * @return options section descriptor
+         */
+        public static Section options(String heading) {
+            return new Section(Kind.OPTIONS, heading, null);
+        }
+
+        /**
+         * Creates a section that prints the command-description registered in the repository.
+         *
+         * @param heading heading label to print
+         * @return description section descriptor
+         */
+        public static Section commandDescription(String heading) {
+            return new Section(Kind.COMMAND_DESCRIPTION, heading, null);
+        }
+
+        /**
+         * Creates an arbitrary custom section with caller-defined content lines.
+         *
+         * @param heading heading label to print (may be {@code null} to suppress the heading)
+         * @param lines content lines; each element can contain embedded newlines
+         * @return custom section descriptor
+         */
+        public static Section custom(String heading, Collection<String> lines) {
+            List<String> normalized = lines == null ? List.of() : new ArrayList<>(lines);
+            return new Section(Kind.CUSTOM, heading, normalized);
+        }
+
+        Kind kind() {
+            return this.kind;
+        }
+
+        String heading() {
+            return this.heading;
+        }
+
+        List<String> lines() {
+            return this.lines;
+        }
+    }
+
+    private List<Section> sections = List.of();
 
     public UtilityCliHelpFormatter() {
         setWidth(100);
@@ -29,88 +103,179 @@ public class UtilityCliHelpFormatter extends HelpFormatter {
         setDescPadding(2);
     }
 
-    public UtilityCliHelpFormatter usageHeading(String heading) {
-        this.usageHeading = heading != null ? heading : "Usage";
+    UtilityCliHelpFormatter sections(List<Section> sections) {
+        this.sections = sections == null ? List.of() : List.copyOf(sections);
         return this;
     }
 
-    public UtilityCliHelpFormatter descriptionHeading(String heading) {
-        this.descriptionHeading = heading != null ? heading : "Description";
-        return this;
+    List<Section> sections() {
+        return this.sections;
     }
 
-    public UtilityCliHelpFormatter optionsHeading(String heading) {
-        this.optionsHeading = heading != null ? heading : "Options";
-        return this;
-    }
-
-    public UtilityCliHelpFormatter examplesHeading(String heading) {
-        this.examplesHeading = heading != null ? heading : "Examples";
-        return this;
-    }
-
-    public UtilityCliHelpFormatter description(String value) {
-        this.description = value;
-        return this;
-    }
-
-    public UtilityCliHelpFormatter examples(Collection<String> values) {
-        if (values == null || values.isEmpty()) {
-            this.examples = List.of();
-        } else {
-            this.examples = List.copyOf(values);
-        }
-        return this;
-    }
-
-    public void printCommandHelp(PrintWriter out, String command, Options options) {
+    /**
+     * Prints the ordered help sections to the supplied writer.
+     *
+     * @param out destination writer
+     * @param command command identifier (used for the usage line)
+     * @param commandOptions options registered for the command (never {@code null})
+     * @param commandDescription textual description registered for the command, may be {@code null}
+     */
+    public void printCommandHelp(PrintWriter out, String command, Options commandOptions,
+            String commandDescription) {
         Objects.requireNonNull(out, "out");
 
-        Options safeOptions = options != null ? options : new Options();
+        Options safeOptions = commandOptions != null ? commandOptions : new Options();
+        String safeCommand = command == null ? "" : command;
+        String description = commandDescription;
 
-        if (command != null && !command.isBlank()) {
-            out.println(usageHeading + ":");
-            StringWriter usageWriter = new StringWriter();
-            PrintWriter usageOut = new PrintWriter(usageWriter);
-            super.printUsage(usageOut, getWidth(), command, safeOptions);
-            usageOut.flush();
-            out.print(indentBlock(usageWriter.toString()));
-            out.println();
-        }
+        List<Section> effectiveSections = resolveSections(this.sections, description,
+                !safeOptions.getOptions().isEmpty());
 
-        if (description != null && !description.isBlank()) {
-            out.println(descriptionHeading + ":");
-            printWrapped(out, getWidth(), "  " + description.trim());
-            out.println();
-        }
-
-        if (!safeOptions.getOptions().isEmpty()) {
-            out.println(optionsHeading + ":");
-            super.printOptions(out, getWidth(), safeOptions, getLeftPadding(), getDescPadding());
-            out.println();
-        }
-
-        if (!examples.isEmpty()) {
-            out.println(examplesHeading + ":");
-            for (String example : examples) {
-                out.println("  " + example);
+        for (int i = 0; i < effectiveSections.size(); i++) {
+            Section section = effectiveSections.get(i);
+            switch (section.kind()) {
+            case USAGE:
+                printUsageSection(out, section.heading(), safeCommand, safeOptions);
+                break;
+            case OPTIONS:
+                printOptionsSection(out, section.heading(), safeOptions);
+                break;
+            case COMMAND_DESCRIPTION:
+                printCommandDescriptionSection(out, section.heading(), description);
+                break;
+            case CUSTOM:
+                printCustomSection(out, section.heading(), section.lines());
+                break;
+            default:
+                throw new IllegalStateException("Unhandled section type: " + section.kind());
             }
-            out.println();
+
+            if (i < effectiveSections.size() - 1) {
+                out.println();
+            }
         }
 
         out.flush();
     }
 
-    private String indentBlock(String text) {
-        String normalized = text.replace("\r\n", "\n").replace('\r', '\n');
-        String[] lines = normalized.split("\n");
-        StringBuilder sb = new StringBuilder();
-        for (String line : lines) {
-            if (!line.isEmpty()) {
-                sb.append("  ").append(line);
+    private List<Section> resolveSections(List<Section> configuredSections, String description,
+            boolean hasOptions) {
+        List<Section> result = new ArrayList<>();
+        boolean usagePresent = false;
+        boolean optionsPresent = false;
+        boolean descriptionPlaceholderPresent = false;
+
+        if (configuredSections != null) {
+            for (Section section : configuredSections) {
+                switch (section.kind()) {
+                case USAGE:
+                    usagePresent = true;
+                    break;
+                case OPTIONS:
+                    optionsPresent = true;
+                    break;
+                case COMMAND_DESCRIPTION:
+                    descriptionPlaceholderPresent = true;
+                    break;
+                default:
+                    break;
+                }
+                result.add(section);
             }
-            sb.append(System.lineSeparator());
         }
-        return sb.toString();
+
+        if (!usagePresent) {
+            result.add(0, Section.usage("Usage"));
+        }
+
+        if (description != null && !description.isBlank() && !descriptionPlaceholderPresent
+                && configuredSections != null && configuredSections.isEmpty()) {
+            // No explicit placeholder supplied but we still want to render the stored description.
+            result.add(1, Section.commandDescription("Description"));
+            descriptionPlaceholderPresent = true;
+        }
+
+        if (hasOptions && !optionsPresent) {
+            result.add(Section.options("Options"));
+        }
+
+        return result;
+    }
+
+    private void printUsageSection(PrintWriter out, String heading, String command, Options options) {
+        if (command == null || command.isBlank()) {
+            return;
+        }
+
+        printHeading(out, heading);
+        StringWriter buffer = new StringWriter();
+        PrintWriter bufferWriter = new PrintWriter(buffer);
+        super.printUsage(bufferWriter, getWidth(), command, options);
+        bufferWriter.flush();
+        printIndentedBlock(out, buffer.toString());
+    }
+
+    private void printOptionsSection(PrintWriter out, String heading, Options options) {
+        if (options == null || options.getOptions().isEmpty()) {
+            return;
+        }
+        printHeading(out, heading);
+        super.printOptions(out, getWidth(), options, getLeftPadding(), getDescPadding());
+    }
+
+    private void printCommandDescriptionSection(PrintWriter out, String heading, String description) {
+        if (description == null || description.isBlank()) {
+            return;
+        }
+        printHeading(out, heading);
+        printMultilineText(out, description);
+    }
+
+    private void printCustomSection(PrintWriter out, String heading, List<String> blocks) {
+        if ((blocks == null || blocks.isEmpty()) && (heading == null || heading.isBlank())) {
+            return;
+        }
+        printHeading(out, heading);
+        if (blocks != null) {
+            for (String block : blocks) {
+                printMultilineText(out, block);
+            }
+        }
+    }
+
+    private void printHeading(PrintWriter out, String heading) {
+        if (heading != null && !heading.isBlank()) {
+            out.println(heading + ":");
+        }
+    }
+
+    private void printMultilineText(PrintWriter out, String text) {
+        if (text == null) {
+            return;
+        }
+        String normalized = normalizeLineEndings(text);
+        String[] lines = normalized.split("\n", -1);
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            if (line.isBlank()) {
+                out.println();
+            } else {
+                printWrapped(out, getWidth(), "  " + line);
+            }
+        }
+    }
+
+    private void printIndentedBlock(PrintWriter out, String text) {
+        String normalized = normalizeLineEndings(text);
+        String[] lines = normalized.split("\n");
+        for (String line : lines) {
+            if (!line.isBlank()) {
+                out.println("  " + line);
+            }
+        }
+    }
+
+    private String normalizeLineEndings(String value) {
+        return value.replace("\r\n", "\n").replace('\r', '\n');
     }
 }

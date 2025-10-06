@@ -14,11 +14,11 @@ When the program is launched without specifying a command name, it displays a li
 
 
 ```
-$ java -jar target/Utility-cli-4.2.0-fat.jar 
+$ java -jar target/Utility-cli-4.2.0.jar 
 
 ## Usage
 
-java -jar Utility-cli-VERSION-fat.jar <command> <options>
+java -jar Utility-cli-VERSION.jar <command> <options>
 
 
 ## jar commands
@@ -41,7 +41,7 @@ split           Splits each line into separate fields.
 When launched with a command name, the tool displays usage information for that command.
 
 ```
-$ java -jar target/Utility-cli-4.2.0-fat.jar split -h
+$ java -jar target/Utility-cli-4.2.0.jar split -h
 
 usage: split
  -d,--delimiter <delimiter>   Field delimiter (default: tab character).
@@ -67,7 +67,7 @@ $ cat taxonomy.dump
 
 calling it as shown below will split it into tab-separated format at the "|" character.
 
-$ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0-fat.jar split -d "\|"
+$ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0.jar split -d "\|"
 1	all		synonym
 1	root		scientific name
 2	Bacteria	Bacteria <bacteria>	scientific name
@@ -103,7 +103,7 @@ cmdRepos.addCommand("batch", options, description, cl -> runBatch(cl));
 
 ### Customizing Help Output with the Builder
 
-Use `UtilityCliHelpFormatterBuilder` when you need full control over the Description / Examples / Options sections. Multi-line text is supported via Java text blocks, and each string passed to `examples(...)` becomes a separate entry inside the Examples block.
+Use `UtilityCliHelpFormatterBuilder` when you need full control over the Description / Examples / Options sections. Sections are rendered in the order you add them, and each string supplied to `addCustomSection` becomes a separate paragraph (multi-line strings are supported).
 
 ```java
 import java.util.List;
@@ -122,30 +122,32 @@ options.addOption("s", "source", true, "Source directory to publish");
 options.addOption("p", "profile", true, "Deployment profile (staging, production, ...)");
 repository.addCommand("deploy", options, baseDescription);
 
-// Apply global defaults (headings, layout, wrapping width).
+// Apply global defaults (Usage → Description → Options).
 UtilityCliHelpFormatterBuilder defaults = new UtilityCliHelpFormatterBuilder()
-        .usageHeading("Usage")
-        .descriptionHeading("Description")
-        .examplesHeading("Examples")
-        .optionsHeading("Options")
+        .addUsageSection("Usage")
+        .addCommandDescriptionSection("Description")
+        .addOptionsSection("Options")
         .width(94);
 repository.configureDefaultHelpFormatter(defaults);
 
-// Specialise the deploy command with an alternate description and curated examples.
-repository.configureCommandHelpFormatter("deploy",
-        new UtilityCliHelpFormatterBuilder()
-                .description("""
-Publishes a prepared static site. Runs the following steps:
-  1. Zips the source directory.
-  2. Uploads the archive to object storage.
-  3. Invalidates the CDN cache when --profile=production.
-""" )
-                .examples(List.of(
-                        "deploy --source docs/ --profile staging",
-                        """
+// Specialise the deploy command with a custom description and example block.
+UtilityCliHelpFormatterBuilder deployHelp = new UtilityCliHelpFormatterBuilder()
+        .clearSections()
+        .addUsageSection("Usage")
+        .addCustomSection("Description", List.of(
+                "Publishes a prepared static site. Runs the following steps:",
+                "  1. Zips the source directory.",
+                "  2. Uploads the archive to object storage.",
+                "  3. Invalidates the CDN cache when --profile=production."))
+        .addCustomSection("Examples", List.of(
+                "deploy --source docs/ --profile staging",
+                """
 deploy --source dist/ --profile production \
   # Uses production credentials and purges the CDN after upload
-""".strip())));
+""".strip()))
+        .addOptionsSection("Options");
+
+repository.configureCommandHelpFormatter("deploy", deployHelp);
 
 // Somewhere in your CLI entry point, when -h is requested:
 repository.printCommandHelp("deploy");
@@ -337,7 +339,7 @@ Subcommands and their command-line options are defined using methods like the ex
 
             calling it as shown below will split it into tab-separated format at the "|" character.
 
-            $ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0-fat.jar split -d "\\|"
+            $ cat taxonomy.dump | java -jar target/Utility-cli-4.2.0.jar split -d "\\|"
             1	all		synonym
             1	root		scientific name
             2	Bacteria	Bacteria <bacteria>	scientific name

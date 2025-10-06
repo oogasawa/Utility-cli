@@ -1,58 +1,22 @@
 package com.github.oogasawa.utility.cli;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.github.oogasawa.utility.cli.UtilityCliHelpFormatter.Section;
+
 /**
- * Builder that captures configuration for {@link UtilityCliHelpFormatter} instances.
- * Storing the builder alongside each command allows rendering a fresh formatter per call
- * while keeping the configuration immutable and easily testable.
+ * Builder capturing layout configuration for {@link UtilityCliHelpFormatter}. The builder stores an
+ * ordered list of sections and formatting parameters (width, indentation) that are materialised into
+ * a formatter instance just before rendering.
  */
 public class UtilityCliHelpFormatterBuilder {
 
-    private String usageHeading;
-    private String descriptionHeading;
-    private String optionsHeading;
-    private String examplesHeading;
-    private String description;
-    private List<String> examples;
+    private final List<Section> sections = new ArrayList<>();
     private Integer width;
     private Integer leftPadding;
     private Integer descPadding;
-
-    public UtilityCliHelpFormatterBuilder usageHeading(String heading) {
-        this.usageHeading = heading;
-        return this;
-    }
-
-    public UtilityCliHelpFormatterBuilder descriptionHeading(String heading) {
-        this.descriptionHeading = heading;
-        return this;
-    }
-
-    public UtilityCliHelpFormatterBuilder optionsHeading(String heading) {
-        this.optionsHeading = heading;
-        return this;
-    }
-
-    public UtilityCliHelpFormatterBuilder examplesHeading(String heading) {
-        this.examplesHeading = heading;
-        return this;
-    }
-
-    public UtilityCliHelpFormatterBuilder description(String value) {
-        this.description = value;
-        return this;
-    }
-
-    public UtilityCliHelpFormatterBuilder examples(Collection<String> values) {
-        if (values == null) {
-            this.examples = null;
-        } else {
-            this.examples = List.copyOf(values);
-        }
-        return this;
-    }
 
     public UtilityCliHelpFormatterBuilder width(int value) {
         this.width = value;
@@ -69,27 +33,70 @@ public class UtilityCliHelpFormatterBuilder {
         return this;
     }
 
+    /**
+     * Adds a usage section that will render the Commons CLI usage string.
+     */
+    public UtilityCliHelpFormatterBuilder addUsageSection(String heading) {
+        this.sections.add(Section.usage(heading));
+        return this;
+    }
+
+    /**
+     * Adds an options section that renders all options registered for the command.
+     */
+    public UtilityCliHelpFormatterBuilder addOptionsSection(String heading) {
+        this.sections.add(Section.options(heading));
+        return this;
+    }
+
+    /**
+     * Adds a section that prints the command description stored in the repository.
+     */
+    public UtilityCliHelpFormatterBuilder addCommandDescriptionSection(String heading) {
+        this.sections.add(Section.commandDescription(heading));
+        return this;
+    }
+
+    /**
+     * Adds a custom section with arbitrary content. Each {@code line} may contain embedded
+     * newlines for multi-line paragraphs.
+     */
+    public UtilityCliHelpFormatterBuilder addCustomSection(String heading,
+            Collection<String> lines) {
+        this.sections.add(Section.custom(heading, lines));
+        return this;
+    }
+
+    /**
+     * Removes any previously configured sections.
+     */
+    public UtilityCliHelpFormatterBuilder clearSections() {
+        this.sections.clear();
+        return this;
+    }
+
+    /**
+     * @return {@code true} when at least one section has been configured
+     */
+    public boolean hasSections() {
+        return !this.sections.isEmpty();
+    }
+
+    List<Section> getSections() {
+        return List.copyOf(this.sections);
+    }
+
+    UtilityCliHelpFormatterBuilder replaceSections(List<Section> newSections) {
+        this.sections.clear();
+        if (newSections != null) {
+            this.sections.addAll(newSections);
+        }
+        return this;
+    }
+
     public UtilityCliHelpFormatterBuilder mergeFrom(UtilityCliHelpFormatterBuilder other) {
         if (other == null) {
             return this;
-        }
-        if (other.usageHeading != null) {
-            this.usageHeading = other.usageHeading;
-        }
-        if (other.descriptionHeading != null) {
-            this.descriptionHeading = other.descriptionHeading;
-        }
-        if (other.optionsHeading != null) {
-            this.optionsHeading = other.optionsHeading;
-        }
-        if (other.examplesHeading != null) {
-            this.examplesHeading = other.examplesHeading;
-        }
-        if (other.description != null) {
-            this.description = other.description;
-        }
-        if (other.examples != null) {
-            this.examples = List.copyOf(other.examples);
         }
         if (other.width != null) {
             this.width = other.width;
@@ -100,62 +107,34 @@ public class UtilityCliHelpFormatterBuilder {
         if (other.descPadding != null) {
             this.descPadding = other.descPadding;
         }
+        if (!other.sections.isEmpty()) {
+            this.sections.clear();
+            this.sections.addAll(other.sections);
+        }
         return this;
     }
 
     public UtilityCliHelpFormatterBuilder copy() {
-        UtilityCliHelpFormatterBuilder builder = new UtilityCliHelpFormatterBuilder();
-        builder.usageHeading = this.usageHeading;
-        builder.descriptionHeading = this.descriptionHeading;
-        builder.optionsHeading = this.optionsHeading;
-        builder.examplesHeading = this.examplesHeading;
-        builder.description = this.description;
-        if (this.examples != null) {
-            builder.examples = List.copyOf(this.examples);
-        }
-        builder.width = this.width;
-        builder.leftPadding = this.leftPadding;
-        builder.descPadding = this.descPadding;
-        return builder;
+        UtilityCliHelpFormatterBuilder copy = new UtilityCliHelpFormatterBuilder();
+        copy.width = this.width;
+        copy.leftPadding = this.leftPadding;
+        copy.descPadding = this.descPadding;
+        copy.sections.addAll(this.sections);
+        return copy;
     }
 
     public UtilityCliHelpFormatter build() {
         UtilityCliHelpFormatter formatter = new UtilityCliHelpFormatter();
         if (this.width != null) {
-            formatter.setWidth(this.width.intValue());
+            formatter.setWidth(this.width);
         }
         if (this.leftPadding != null) {
-            formatter.setLeftPadding(this.leftPadding.intValue());
+            formatter.setLeftPadding(this.leftPadding);
         }
         if (this.descPadding != null) {
-            formatter.setDescPadding(this.descPadding.intValue());
+            formatter.setDescPadding(this.descPadding);
         }
-        if (this.usageHeading != null) {
-            formatter.usageHeading(this.usageHeading);
-        }
-        if (this.descriptionHeading != null) {
-            formatter.descriptionHeading(this.descriptionHeading);
-        }
-        if (this.optionsHeading != null) {
-            formatter.optionsHeading(this.optionsHeading);
-        }
-        if (this.examplesHeading != null) {
-            formatter.examplesHeading(this.examplesHeading);
-        }
-        if (this.description != null) {
-            formatter.description(this.description);
-        }
-        if (this.examples != null) {
-            formatter.examples(this.examples);
-        }
+        formatter.sections(this.sections);
         return formatter;
-    }
-
-    boolean hasDescription() {
-        return this.description != null;
-    }
-
-    boolean hasOptionsHeading() {
-        return this.optionsHeading != null;
     }
 }
